@@ -4,21 +4,15 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { signIn, resetPassword } from '@/integrations/supabase/auth';
 import { useToast } from '@/hooks/use-toast';
-
-interface LoginFormData {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   redirectTo: string;
 }
 
 const LoginForm = ({ redirectTo }: LoginFormProps) => {
-  const [formData, setFormData] = useState<LoginFormData>({
+  const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
@@ -27,93 +21,73 @@ const LoginForm = ({ redirectTo }: LoginFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
     
-    if (type === 'checkbox') {
-      const target = e.target as HTMLInputElement;
-      setFormData(prev => ({
-        ...prev,
-        [name]: target.checked
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-      
-      // Clear error for this field when user starts typing again
-      if (errors[name]) {
-        setErrors(prev => {
-          const newErrors = {...prev};
-          delete newErrors[name];
-          return newErrors;
-        });
-      }
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
-    // Validate email
-    if (!formData.email) {
-      newErrors.email = 'Email wajib diisi';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
-      newErrors.email = 'Format email tidak valid';
-    }
-    
-    // Validate password
-    if (!formData.password) {
-      newErrors.password = 'Password wajib diisi';
-    }
-    
+    if (!formData.email) newErrors.email = 'Email wajib diisi';
+    if (!formData.password) newErrors.password = 'Password wajib diisi';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
     
     setIsLoading(true);
 
     try {
-      const { error } = await signIn({
-        email: formData.email,
-        password: formData.password,
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
       });
-      
-      if (error) {
-        if (error.message.includes('Invalid login')) {
-          toast({
-            title: "Login gagal",
-            description: "Email atau password salah. Silakan coba lagi.",
-            variant: "destructive"
-          });
-        } else if (error.message.includes('Email not confirmed')) {
-          toast({
-            title: "Email belum diverifikasi",
-            description: "Silakan periksa email Anda untuk verifikasi akun.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Login gagal",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
-    } catch (error) {
-      console.error('Login error:', error);
+      
+      // Store token
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       toast({
-        title: "Login gagal!",
-        description: "Terjadi kesalahan saat login. Silakan coba lagi.",
+        title: "Login Berhasil",
+        description: "Selamat datang kembali!",
+      });
+
+      // Redirect
+      navigate(redirectTo || '/dashboard');
+      
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Terjadi kesalahan saat login';
+      toast({
+        title: "Login Gagal",
+        description: msg,
         variant: "destructive"
       });
     } finally {
@@ -121,53 +95,11 @@ const LoginForm = ({ redirectTo }: LoginFormProps) => {
     }
   };
   
-  const handleForgotPassword = async () => {
-    if (!formData.email) {
-      setErrors({
-        email: 'Masukkan email Anda untuk reset password'
-      });
-      return;
-    }
-    
-    if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
-      setErrors({
-        email: 'Format email tidak valid'
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      const { error } = await resetPassword(formData.email);
-      
-      if (error) {
-        toast({
-          title: "Reset password gagal",
-          description: error.message,
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      toast({
-        title: "Email reset password terkirim",
-        description: "Silakan periksa email Anda untuk instruksi reset password."
-      });
-    } catch (error) {
-      console.error('Reset password error:', error);
-      toast({
-        title: "Reset password gagal",
-        description: "Terjadi kesalahan. Silakan coba lagi.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const toggleShowPassword = () => {
-    setShowPassword(prev => !prev);
+  const handleForgotPassword = () => {
+    toast({
+      title: "Lupa Password",
+      description: "Silakan hubungi admin untuk reset password (feature coming soon).",
+    });
   };
 
   return (
@@ -217,7 +149,7 @@ const LoginForm = ({ redirectTo }: LoginFormProps) => {
           />
           <button
             type="button"
-            onClick={toggleShowPassword}
+            onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
           >
             {showPassword ? (

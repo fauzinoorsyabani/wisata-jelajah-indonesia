@@ -1,6 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+// import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'sonner';
 
 // Public pages
@@ -8,6 +8,8 @@ import Home from './pages/Index';
 import Register from './pages/auth/Register';
 import AdminRegister from './pages/auth/AdminRegister';
 import Login from './pages/auth/Login';
+import AdminLogin from './pages/auth/AdminLogin';
+
 import CustomerDashboard from './pages/CustomerDashboard';
 import Destinations from './pages/Destinations';
 import DestinationDetail from './pages/DestinationDetail';
@@ -29,12 +31,13 @@ import Help from './pages/Help';
 function App() {
   return (
     <Router>
-      <AuthProvider>
         <Routes>
           {/* Public routes */}
           <Route index element={<Home />} />
           <Route path="register" element={<Register />} />
+          <Route path="admin/login" element={<AdminLogin />} />
           <Route path="admin/register" element={<AdminRegister />} />
+
           <Route path="login" element={<Login />} />
           <Route path="dashboard" element={<CustomerDashboard />} />
           <Route path="destinasi" element={<Destinations />} />
@@ -57,7 +60,6 @@ function App() {
           </Route>
         </Routes>
         <Toaster position="top-right" />
-      </AuthProvider>
     </Router>
   );
 }

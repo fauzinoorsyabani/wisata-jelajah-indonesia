@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const SocialLogin = () => {
@@ -9,21 +7,11 @@ const SocialLogin = () => {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Google login error:', error);
-      toast.error('Login dengan Google gagal');
-    } finally {
-      setLoading(false);
-    }
+    // Placeholder for Google Login integration with custom backend
+    setTimeout(() => {
+        toast.info('Google Login integration requires backend setup with valid Client ID.');
+        setLoading(false);
+    }, 1000);
   };
 
   return (

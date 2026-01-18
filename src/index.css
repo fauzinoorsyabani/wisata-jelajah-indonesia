@@ -1,5 +1,4 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -78,7 +77,12 @@
     @apply bg-background text-foreground font-roboto;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-poppins font-semibold;
   }
 }
@@ -87,39 +91,36 @@
   .container-custom {
     @apply container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
-  
+
   .btn-primary {
     @apply bg-primary text-white py-2 px-6 rounded-md hover:bg-primary/90 transition-colors font-medium;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-white py-2 px-6 rounded-md hover:bg-secondary/90 transition-colors font-medium;
   }
-  
+
   .btn-accent {
     @apply bg-accent text-white py-2 px-6 rounded-md hover:bg-accent/90 transition-colors font-medium;
   }
-  
+
   .btn-outline {
     @apply border border-primary text-primary bg-transparent py-2 px-6 rounded-md hover:bg-primary/5 transition-colors font-medium;
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    @apply bg-primary;
   }
-  
+
   .gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.8));
+    @apply bg-accent;
   }
-  
+
   .card-hover {
     @apply hover:shadow-xl hover:scale-[1.02] transition-all duration-300;
   }
-  
+
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    @apply text-primary;
   }
 }

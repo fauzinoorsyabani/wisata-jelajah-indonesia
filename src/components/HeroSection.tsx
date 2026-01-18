@@ -8,19 +8,19 @@ import SearchBar from './SearchBar';
 const destinations = [{
   id: 1,
   name: 'Pantai Kuta, Bali',
-  image: 'https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'
+  image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1920&q=80'
 }, {
   id: 2,
   name: 'Candi Borobudur, Magelang',
-  image: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'
+  image: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=1920&q=80'
 }, {
   id: 3,
   name: 'Raja Ampat, Papua',
-  image: 'https://images.unsplash.com/photo-1516690561799-19570037e9ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'
+  image: 'https://images.unsplash.com/photo-1516690561799-19570037e9ed?auto=format&fit=crop&w=1920&q=80'
 }, {
   id: 4,
   name: 'Gunung Bromo, Jawa Timur',
-  image: 'https://images.unsplash.com/photo-1589311836499-19570037e9ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'
+  image: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=1920&q=80'
 }];
 
 const HeroSection = () => {
