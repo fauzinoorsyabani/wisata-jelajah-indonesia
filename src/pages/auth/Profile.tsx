@@ -24,8 +24,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { updateProfile, uploadProfileImage, signOut } from '@/integrations/supabase/auth';
+// import { supabase } from '@/integrations/supabase/client';
+// import { updateProfile, uploadProfileImage, signOut } from '@/integrations/supabase/auth';
 
 type ProfileData = {
   id: string;
@@ -103,193 +103,124 @@ const Profile = () => {
       if (!user) return;
       
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+        // Use user data from context or fetch from new backend
+        // const response = await fetch(`http://localhost:5000/api/users/${user.id}`);
+        // ...
         
-        if (error) {
-          throw error;
-        }
-        
-        const profileWithEmail = {
-          ...data,
+        setProfileData({
+          id: user.id || '123',
+          full_name: user.full_name || 'User', // Fallback if context doesn't have it
           email: user.email || '',
-        };
+          phone_number: user.phone || '',
+          alamat: user.address || '',
+          profile_picture_url: user.picture || null
+        });
         
-        setProfileData(profileWithEmail);
-        setTempProfileData(profileWithEmail);
-        
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching profile:', error);
         toast({
           title: "Error",
-          description: "Gagal mengambil data profil",
+          description: "Gagal memuat profil pengguna",
           variant: "destructive"
         });
-      } finally {
-        setIsLoading(false);
       }
     };
-    
-    if (user) {
-      fetchProfileData();
-    } else if (!authLoading) {
-      setIsLoading(false);
-    }
-  }, [user, authLoading, toast]);
-  
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate('/login');
-      toast({
-        title: "Akses ditolak",
-        description: "Silakan login untuk mengakses halaman profil",
-        variant: "destructive"
-      });
-    }
-  }, [isAuthenticated, authLoading, navigate, toast]);
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    if (tempProfileData) {
-      setTempProfileData(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          [name === 'fullName' ? 'full_name' : 
-           name === 'phone' ? 'phone_number' : 
-           name === 'address' ? 'alamat' : name]: value
-        };
-      });
-    }
-  };
+    fetchProfileData();
+  }, [user, toast]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setNewProfileImage(file);
-      setProfileImagePreview(URL.createObjectURL(file));
+        const file = e.target.files[0];
+        setNewProfileImage(file);
+        setProfileImagePreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSaveProfile = async () => {
-    if (!user || !tempProfileData) return;
-    
-    setIsLoading(true);
-    
-    try {
-      // If there's a new profile image, upload it first
-      let newImageUrl = null;
-      if (newProfileImage) {
-        const { url, error: uploadError } = await uploadProfileImage(user.id, newProfileImage);
-        
-        if (uploadError) {
-          throw uploadError;
-        }
-        
-        newImageUrl = url;
-      }
-      
-      // Update profile data
-      const { error } = await updateProfile(user.id, {
-        full_name: tempProfileData.full_name,
-        phone_number: tempProfileData.phone_number || null,
-        alamat: tempProfileData.alamat || null,
-        ...(newImageUrl && { profile_picture_url: newImageUrl })
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Update local state with the new data
-      setProfileData({
-        ...tempProfileData,
-        profile_picture_url: newImageUrl || tempProfileData.profile_picture_url
-      });
-      
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (tempProfileData) {
+        setTempProfileData({
+            ...tempProfileData,
+            [e.target.name === 'fullName' ? 'full_name' : 
+             e.target.name === 'phone' ? 'phone_number' : 
+             e.target.name === 'address' ? 'alamat' : e.target.name]: e.target.value
+        });
+    }
+  };
+  
+  const handleCancelEdit = () => {
       setIsEditing(false);
-      toast({
-        title: "Profil berhasil diperbarui",
-        description: "Data profil Anda telah disimpan"
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Gagal memperbarui profil",
-        description: "Terjadi kesalahan saat menyimpan data",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+      setTempProfileData({...profileData} as ProfileData);
       setNewProfileImage(null);
       setProfileImagePreview(null);
-    }
   };
-
-  const handleCancelEdit = () => {
-    setTempProfileData(profileData);
-    setNewProfileImage(null);
-    setProfileImagePreview(null);
-    setIsEditing(false);
+  
+  const handleSaveProfile = async () => {
+      if (!tempProfileData) return;
+      
+      setIsLoading(true);
+      try {
+          // Mock update to backend
+           await new Promise(resolve => setTimeout(resolve, 1000));
+           
+           setProfileData(tempProfileData);
+           setIsEditing(false);
+           
+           toast({
+               title: "Profil Diperbarui",
+               description: "Perubahan profil berhasil disimpan."
+           });
+           
+      } catch (error) {
+          toast({
+              title: "Gagal",
+              description: "Gagal memperbarui profil",
+              variant: "destructive"
+          });
+      } finally {
+          setIsLoading(false);
+      }
   };
   
   const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate password
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Konfirmasi password tidak cocok",
-        description: "Password baru dan konfirmasi password harus sama",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // In a real app, you would update the password through Supabase Auth
-    try {
+      e.preventDefault();
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+          toast({
+              title: "Error",
+              description: "Konfirmasi password tidak cocok",
+              variant: "destructive"
+          });
+          return;
+      }
+      
       setIsLoading(true);
-      
-      // Here you would call the Supabase auth.updateUser method
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Password berhasil diperbarui",
-        description: "Password Anda telah diperbarui"
-      });
-      
-      // Reset form
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-    } catch (error) {
-      console.error('Error updating password:', error);
-      toast({
-        title: "Gagal memperbarui password",
-        description: "Terjadi kesalahan saat menyimpan password",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
+      try {
+          // Mock password update
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          toast({
+              title: "Berhasil",
+              description: "Password berhasil diubah"
+          });
+          setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } catch (error) {
+           toast({
+              title: "Gagal",
+              description: "Gagal mengubah password",
+              variant: "destructive"
+          });
+      } finally {
+          setIsLoading(false);
+      }
   };
   
-  const handleLogout = async () => {
-    await signOut();
-    // Redirection handled by AuthContext
+  const handleLogout = () => {
+      // Use auth context logout
+      // Assuming logout function is available or we use navigate
+      navigate('/login');
   };
-  
+
   const handleDeleteAccount = async () => {
     // In a real implementation, you would add confirmation and call Supabase to delete the user
     try {

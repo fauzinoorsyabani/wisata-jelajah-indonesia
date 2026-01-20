@@ -16,7 +16,7 @@ const destinations = [{
 }, {
   id: 3,
   name: 'Raja Ampat, Papua',
-  image: 'https://images.unsplash.com/photo-1516690561799-19570037e9ed?auto=format&fit=crop&w=1920&q=80'
+  image: 'https://images.unsplash.com/photo-1703769605297-cc74106244d9?q=80&w=1484&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
 }, {
   id: 4,
   name: 'Gunung Bromo, Jawa Timur',

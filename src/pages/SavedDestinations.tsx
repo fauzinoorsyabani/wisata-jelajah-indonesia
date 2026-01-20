@@ -1,14 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import DestinationCard from '@/components/DestinationCard';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Heart, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,19 +18,20 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Mock interface for saved destination
 interface SavedDestination {
-  id: string;
+  id: string; // The saved record ID
+  destination_id: string;
   name: string;
   location: string;
-  image: string;
+  image_url: string;
   rating: number;
-  price: string;
+  price: number;
   category: string;
-  saved_id: string;
 }
 
 const SavedDestinations = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [savedDestinations, setSavedDestinations] = useState<SavedDestination[]>([]);
@@ -44,69 +42,49 @@ const SavedDestinations = () => {
       navigate('/login', { state: { from: '/saved-destinations' } });
       return;
     }
-
+    
     fetchSavedDestinations();
-  }, [isAuthenticated, navigate, user, toast]);
+  }, [isAuthenticated, navigate]);
 
   const fetchSavedDestinations = async () => {
-    if (!user) return;
-    
+    setLoading(true);
     try {
-      setLoading(true);
+      // Mock data fetch - waiting for Backend API
+      // const response = await fetch(`http://localhost:5000/api/users/${user.id}/saved`);
       
-      // Fetch saved destinations with destination details
-      const { data: savedData, error: savedError } = await supabase
-        .from('saved_destinations')
-        .select(`
-          id,
-          saved_at,
-          destinations (
-            id,
-            name,
-            location,
-            image_url,
-            rating,
-            category,
-            price
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('saved_at', { ascending: false });
+      // Simulate delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      if (savedError) {
-        console.error('Error fetching saved destinations:', savedError);
-        toast({
-          title: "Error",
-          description: "Gagal memuat destinasi tersimpan",
-          variant: "destructive"
-        });
-        setSavedDestinations([]);
-        return;
-      }
+      // Dummy data
+      const dummyData: SavedDestination[] = [
+        {
+          id: 'saved-1',
+          destination_id: '1',
+          name: 'Raja Ampat',
+          location: 'Papua Barat',
+          image_url: 'https://images.unsplash.com/photo-1573790387438-4da905039392?auto=format&fit=crop&q=80',
+          rating: 4.8,
+          price: 5000000,
+          category: 'Wisata Alam'
+        },
+        {
+          id: 'saved-2',
+          destination_id: '2',
+          name: 'Candi Borobudur',
+          location: 'Magelang, Jawa Tengah',
+          image_url: 'https://images.unsplash.com/photo-1555899434-94d1368d7fe6?auto=format&fit=crop&q=80',
+          rating: 4.7,
+          price: 50000,
+          category: 'Budaya'
+        }
+      ];
       
-      if (savedData && savedData.length > 0) {
-        const formattedData: SavedDestination[] = savedData
-          .filter(item => item.destinations) // Filter out items where destination might be null
-          .map(item => ({
-            id: item.destinations.id,
-            name: item.destinations.name,
-            location: item.destinations.location,
-            image: item.destinations.image_url || 'https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8',
-            rating: item.destinations.rating || 0,
-            price: `Mulai dari Rp ${(item.destinations.price || 50000).toLocaleString('id-ID')}`,
-            category: item.destinations.category || 'Wisata',
-            saved_id: item.id
-          }));
-        
-        setSavedDestinations(formattedData);
-      } else {
-        setSavedDestinations([]);
-      }
+      setSavedDestinations(dummyData);
     } catch (error) {
       console.error('Error fetching saved destinations:', error);
       toast({
         title: "Error",
-        description: "Terjadi kesalahan saat memuat destinasi tersimpan",
+        description: "Gagal memuat daftar tersimpan",
         variant: "destructive"
       });
     } finally {
@@ -116,33 +94,30 @@ const SavedDestinations = () => {
 
   const handleRemoveFromSaved = async (savedId: string, destinationName: string) => {
     try {
-      const { error } = await supabase
-        .from('saved_destinations')
-        .delete()
-        .eq('id', savedId);
-      
-      if (error) throw error;
-      
-      // Remove the destination from the list
-      setSavedDestinations(prev => prev.filter(item => item.saved_id !== savedId));
-      
-      toast({
-        title: "Berhasil dihapus",
-        description: `${destinationName} berhasil dihapus dari daftar tersimpan`,
-        variant: "default"
-      });
+        // Mock API Call
+        // await fetch(`http://localhost:5000/api/saved/${savedId}`, { method: 'DELETE' });
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setSavedDestinations(prev => prev.filter(item => item.id !== savedId));
+        
+        toast({
+            title: "Berhasil dihapus",
+            description: `${destinationName} berhasil dihapus dari daftar tersimpan`,
+            variant: "default"
+        });
     } catch (error) {
-      console.error('Error removing destination:', error);
-      toast({
-        title: "Error",
-        description: "Gagal menghapus destinasi dari daftar tersimpan",
-        variant: "destructive"
-      });
+        console.error('Error removing destination:', error);
+        toast({
+            title: "Error",
+            description: "Gagal menghapus destinasi",
+            variant: "destructive"
+        });
     }
   };
 
-  const handleCardClick = (id: string) => {
-    navigate(`/destinasi/${id}`);
+  const handleCardClick = (destinationId: string) => {
+    navigate(`/destinasi/${destinationId}`);
   };
 
   return (
@@ -171,32 +146,41 @@ const SavedDestinations = () => {
           </div>
         ) : savedDestinations.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedDestinations.map((destination) => (
-              <div key={destination.saved_id} className="relative group">
-                <div className="cursor-pointer" onClick={() => handleCardClick(destination.id)}>
-                  <DestinationCard
-                    id={destination.id}
-                    name={destination.name}
-                    location={destination.location}
-                    image={destination.image}
-                    rating={destination.rating}
-                    price={destination.price}
-                    category={destination.category}
-                  />
+            {savedDestinations.map((item) => (
+              <div key={item.id} className="relative group bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+                <div className="cursor-pointer" onClick={() => handleCardClick(item.destination_id)}>
+                    <div className="h-48 overflow-hidden">
+                        <img 
+                            src={item.image_url} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
+                        />
+                    </div>
+                    <div className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-lg truncate">{item.name}</h3>
+                            <div className="flex items-center bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded text-xs">
+                                <span>{item.rating}</span>
+                                <span className="ml-0.5">★</span>
+                            </div>
+                        </div>
+                        <p className="text-gray-500 text-sm mb-3 flex items-center">
+                             📍 {item.location}
+                        </p>
+                        <div className="font-medium text-primary">
+                            Rp {item.price.toLocaleString('id-ID')}
+                        </div>
+                    </div>
                 </div>
                 
                 {/* Remove button */}
                 <div className="absolute top-2 right-2 flex gap-2">
-                  <div className="bg-white rounded-full p-1 shadow-md">
-                    <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-                  </div>
-                  
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="destructive"
                         size="icon"
-                        className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 rounded-full opacity-90 hover:opacity-100 shadow-md"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -205,14 +189,14 @@ const SavedDestinations = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Hapus dari Tersimpan?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Apakah Anda yakin ingin menghapus "{destination.name}" dari daftar destinasi tersimpan? 
+                          Apakah Anda yakin ingin menghapus "{item.name}" dari daftar destinasi tersimpan? 
                           Tindakan ini tidak dapat dibatalkan.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleRemoveFromSaved(destination.saved_id, destination.name)}
+                          onClick={() => handleRemoveFromSaved(item.id, item.name)}
                           className="bg-red-600 hover:bg-red-700"
                         >
                           Hapus

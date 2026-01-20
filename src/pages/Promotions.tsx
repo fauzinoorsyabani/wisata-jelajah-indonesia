@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -9,7 +8,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, ArrowRight, Percent, Gift } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface Promotion {
@@ -21,10 +19,11 @@ interface Promotion {
   discount_amount: number | null;
   start_date: string;
   end_date: string;
-  is_active: boolean;
-  category: string;
   image_url: string;
+  category: string;
+  is_active: boolean;
 }
+
 
 const calculateDaysLeft = (expiryDate: string) => {
   const today = new Date();
@@ -53,18 +52,71 @@ const Promotions = () => {
 
   const fetchPromotions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('promotions')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+      // Mock data for promotions
+      const mockPromotions: Promotion[] = [
+        {
+          id: '1',
+          title: 'Diskon Liburan Sekolah',
+          description: 'Nikmati liburan sekolah seru bersama keluarga dengan diskon spesial untuk semua destinasi wisata alam.',
+          promo_code: 'SCHOOL20',
+          discount_percentage: 20,
+          discount_amount: null,
+          start_date: '2024-06-01',
+          end_date: '2024-07-15',
+          image_url: 'https://images.unsplash.com/photo-1573790387438-4da905039392?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          category: 'Family',
+          is_active: true
+        },
+        {
+          id: '2',
+          title: 'Flash Sale Weekend',
+          description: 'Potongan harga khusus untuk booking di akhir pekan ini. Jangan sampai ketinggalan!',
+          promo_code: 'FLASH50',
+          discount_percentage: 50,
+          discount_amount: null,
+          start_date: '2024-06-08',
+          end_date: '2024-06-09',
+          image_url: 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          category: 'Flash Sale',
+          is_active: true
+        },
+        {
+          id: '3',
+          title: 'Promo Spesial Kemerdekaan',
+          description: 'Rayakan kemerdekaan dengan jelajah wisata sejarah Indonesia.',
+          promo_code: 'MERDEKA17',
+          discount_percentage: 17,
+          discount_amount: null,
+          start_date: '2024-08-01',
+          end_date: '2024-08-31',
+          image_url: 'https://images.unsplash.com/photo-1584810359583-96fc3448beaa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          category: 'Special',
+          is_active: true
+        },
+        {
+          id: '4',
+          title: 'Paket Hemat Keluarga',
+          description: 'Hemat Rp 100.000 untuk pembelian tiket grup minimal 5 orang.',
+          promo_code: 'FAMILY100',
+          discount_percentage: null,
+          discount_amount: 100000,
+          start_date: '2024-06-01',
+          end_date: '2024-12-31',
+          image_url: 'https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+          category: 'Family',
+          is_active: true
+        }
+      ];
 
-      if (error) throw error;
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500)); 
 
-      setPromotions(data || []);
-      // Set featured promo to the first one with category 'Featured'
-      const featured = data?.find(p => p.category === 'Featured') || data?.[0];
-      setFeaturedPromo(featured || null);
+      setPromotions(mockPromotions);
+      
+      // Set featured promo to the promo with highest discount
+      const featured = mockPromotions.find(p => p.promo_code === 'FLASH50') || mockPromotions[0];
+      setFeaturedPromo(featured);
+
     } catch (error) {
       console.error('Error fetching promotions:', error);
       toast({

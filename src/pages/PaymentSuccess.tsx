@@ -1,102 +1,45 @@
 
+
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardTitle, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ChevronRight, Download, Printer } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { CheckCircle, Download, Home, Ticket, ChevronRight } from 'lucide-react';
 
 const PaymentSuccess = () => {
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Get session_id from URL if redirect from Stripe
+  const sessionId = searchParams.get('session_id');
+
   useEffect(() => {
-    const fetchBookingDetails = async () => {
-      try {
-        setLoading(true);
-        
-        // Get booking ID from URL params
-        const params = new URLSearchParams(location.search);
-        const bookingId = params.get('booking_id');
-        const sessionId = params.get('session_id');
-        
-        if (!bookingId) {
-          toast({
-            title: "Error",
-            description: "Tidak dapat menemukan informasi pemesanan",
-            variant: "destructive"
-          });
-          navigate('/');
-          return;
-        }
-        
-        console.log('Fetching booking details for ID:', bookingId);
-        
-        // Get booking details from Supabase
-        const { data, error } = await supabase
-          .from('bookings')
-          .select(`
-            *,
-            destinations:destination_id(*),
-            ticket_types:ticket_type_id(*)
-          `)
-          .eq('id', bookingId)
-          .single();
-        
-        if (error || !data) {
-          console.error('Error fetching booking details:', error);
-          toast({
-            title: "Error",
-            description: "Gagal memuat detail pemesanan",
-            variant: "destructive"
-          });
-          navigate('/');
-          return;
-        }
-        
-        console.log('Booking details retrieved:', data);
-        
-        // Update booking status to paid and confirmed if coming from successful Stripe payment
-        if (sessionId) {
-          console.log('Updating booking status with session ID:', sessionId);
-          
-          const { error: updateError } = await supabase
-            .from('bookings')
-            .update({
-              payment_status: 'paid',
-              status: 'confirmed',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', bookingId);
-            
-          if (updateError) {
-            console.error('Error updating booking status:', updateError);
-          } else {
-            console.log('Booking status updated successfully');
-          }
-        }
-        
-        setBookingDetails(data);
-      } catch (error) {
-        console.error("Error fetching booking details:", error);
-        toast({
-          title: "Error",
-          description: "Terjadi kesalahan saat memuat data",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Mock success state and fetch booking details (or just show success)
+    setLoading(true);
     
-    fetchBookingDetails();
-  }, [location.search, navigate, toast]);
+    // Simulate API delay
+    const timer = setTimeout(() => {
+      // Mock booking details
+      setBookingDetails({
+        id: 'mock-booking-id',
+        booking_number: 'WJL-MOCK-123',
+        destinations: { name: 'Destinasi Wisata' },
+        ticket_types: { name: 'Tiket Reguler' },
+        quantity: 2,
+        visit_date: new Date().toISOString(),
+        total_price: 150000,
+        status: 'confirmed',
+        payment_status: 'paid'
+      });
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [sessionId, navigate]);
   
   return (
     <div className="min-h-screen flex flex-col">

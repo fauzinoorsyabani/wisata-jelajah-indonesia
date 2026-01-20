@@ -120,38 +120,33 @@ const Help = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchHelpData();
-  }, []);
-
-  const fetchHelpData = async () => {
-    try {
-      const [categoriesResponse, articlesResponse] = await Promise.all([
-        supabase
-          .from('help_categories')
-          .select('*')
-          .order('display_order'),
-        supabase
-          .from('help_articles')
-          .select('*')
-          .order('display_order')
+    // Simulate fetching data
+    const mockFetchData = async () => {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+      setCategories([
+        { id: 'cat1', name: 'Akun & Profil', icon: 'user', display_order: 1 },
+        { id: 'cat2', name: 'Pemesanan Tiket', icon: 'ticket', display_order: 2 },
+        { id: 'cat3', name: 'Pembayaran', icon: 'credit-card', display_order: 3 },
+        { id: 'cat4', name: 'E-Tiket & QR Code', icon: 'qr-code', display_order: 4 },
+        { id: 'cat5', name: 'Pengembalian Dana', icon: 'arrow-left', display_order: 5 },
+        { id: 'cat6', name: 'Lain-lain', icon: 'help-circle', display_order: 6 },
       ]);
-
-      if (categoriesResponse.error) throw categoriesResponse.error;
-      if (articlesResponse.error) throw articlesResponse.error;
-
-      setCategories(categoriesResponse.data || []);
-      setArticles(articlesResponse.data || []);
-    } catch (error) {
-      console.error('Error fetching help data:', error);
-      toast({
-        title: "Error",
-        description: "Gagal memuat data bantuan. Silakan coba lagi.",
-        variant: "destructive"
-      });
-    } finally {
+      setArticles([
+        { id: 'art1', category_id: 'cat1', question: 'Bagaimana cara mengubah kata sandi?', answer: 'Anda dapat mengubah kata sandi melalui halaman pengaturan akun Anda.', display_order: 1, is_featured: true },
+        { id: 'art2', category_id: 'cat1', question: 'Bagaimana cara memperbarui informasi profil?', answer: 'Informasi profil dapat diperbarui di bagian "Edit Profil" pada akun Anda.', display_order: 2, is_featured: false },
+        { id: 'art3', category_id: 'cat2', question: 'Bagaimana cara memesan tiket?', answer: 'Pilih acara, tanggal, dan jumlah tiket, lalu ikuti langkah-langkah pembayaran.', display_order: 1, is_featured: true },
+        { id: 'art4', category_id: 'cat2', question: 'Bisakah saya membatalkan pesanan tiket?', answer: 'Pembatalan tiket tergantung pada kebijakan acara dan waktu pembatalan.', display_order: 2, is_featured: false },
+        { id: 'art5', category_id: 'cat3', question: 'Metode pembayaran apa saja yang tersedia?', answer: 'Kami menerima pembayaran melalui kartu kredit, transfer bank, dan e-wallet.', display_order: 1, is_featured: true },
+        { id: 'art6', category_id: 'cat3', question: 'Pembayaran saya gagal, apa yang harus saya lakukan?', answer: 'Pastikan detail pembayaran Anda benar atau coba metode pembayaran lain.', display_order: 2, is_featured: false },
+        { id: 'art7', category_id: 'cat4', question: 'Bagaimana cara mendapatkan e-tiket saya?', answer: 'E-tiket akan dikirimkan ke email Anda setelah pembayaran berhasil.', display_order: 1, is_featured: true },
+        { id: 'art8', category_id: 'cat4', question: 'QR Code saya tidak bisa dipindai?', answer: 'Pastikan layar ponsel Anda cukup terang dan tidak ada kerusakan pada QR Code.', display_order: 2, is_featured: false },
+        { id: 'art9', category_id: 'cat5', question: 'Bagaimana proses pengembalian dana?', answer: 'Pengajuan pengembalian dana dapat dilakukan melalui halaman pesanan Anda.', display_order: 1, is_featured: false },
+        { id: 'art10', category_id: 'cat6', question: 'Saya punya pertanyaan lain, bagaimana cara menghubungi support?', answer: 'Anda bisa menghubungi kami melalui chat, telepon, atau email yang tersedia di halaman ini.', display_order: 1, is_featured: true },
+      ]);
       setLoading(false);
-    }
-  };
+    };
+    mockFetchData();
+  }, []);
 
   const getArticlesByCategory = (categoryId: string) => {
     return articles.filter(article => article.category_id === categoryId);

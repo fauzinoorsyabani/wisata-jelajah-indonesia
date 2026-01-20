@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
 import { Ticket, Calendar, Info, ArrowLeft } from 'lucide-react';
@@ -49,32 +49,24 @@ const Booking = () => {
     try {
       setLoading(true);
       
-      // Fetch destination data
-      const { data: destinationData, error: destinationError } = await supabase
-        .from('destinations')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (destinationError) {
-        throw destinationError;
-      }
+      // Fetch destination data from backend
+      const response = await fetch(`http://localhost:5000/api/destinations/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch destination');
+      const destinationData = await response.json();
       
       setDestination(destinationData);
       
-      // Fetch ticket type data
-      const { data: ticketData, error: ticketError } = await supabase
-        .from('ticket_types')
-        .select('*')
-        .eq('id', ticketTypeId)
-        .eq('destination_id', id)
-        .single();
+      // Mock ticket data request (since backend might not have tickets endpoint yet)
+      // In real implementation: await fetch(`http://localhost:5000/api/tickets/${ticketTypeId}`)
+      const dummyTicket = {
+          id: ticketTypeId,
+          name: 'Tiket Masuk Reguler',
+          price: parseInt(destinationData.price) || 50000,
+          description: 'Tiket masuk untuk 1 orang',
+          destination_id: id
+      };
       
-      if (ticketError) {
-        throw ticketError;
-      }
-      
-      setTicketType(ticketData);
+      setTicketType(dummyTicket);
       
     } catch (error) {
       console.error('Error fetching booking data:', error);

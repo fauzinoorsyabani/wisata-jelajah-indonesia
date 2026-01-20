@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, CreditCard, Heart, Settings, LogOut } from 'lucide-react';
+import { User, MapPin, Calendar, LogOut, Heart, Ticket, Settings, CreditCard } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Booking {
   id: string;
@@ -39,78 +39,87 @@ interface SavedDestination {
 }
 
 const CustomerDashboard = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [savedDestinations, setSavedDestinations] = useState<SavedDestination[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [stats, setStats] = useState({
+    bookings: 0,
+    saved: 0,
+    points: 0
+  });
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Mock API Fetch for Bookings
+        const mockBookings: Booking[] = [
+          {
+            id: '1',
+            booking_number: 'B001',
+            destination_id: 'd1',
+            visit_date: '2024-06-01',
+            quantity: 2,
+            total_price: 500000.00,
+            status: 'confirmed',
+            payment_status: 'paid',
+            destinations: {
+              name: 'Raja Ampat',
+              location: 'Papua Barat',
+              image_url: 'https://images.unsplash.com/photo-1573790387438-4da905039392?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
+            }
+          }
+        ];
+        
+        // Mock API Fetch for Saved Destinations
+        const mockSaved: SavedDestination[] = [
+           {
+             id: 's1',
+             destination_id: 'd2',
+             saved_at: '2024-05-20',
+             destinations: {
+               name: 'Gunung Bromo',
+               location: 'Jawa Timur',
+               image_url: 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+               price: 150000
+             }
+           }
+        ];
+
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        setBookings(mockBookings);
+        setSavedDestinations(mockSaved);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Gagal memuat data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchData();
-  }, [user, navigate]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch bookings
-      const { data: bookingsData, error: bookingsError } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          destinations (
-            name,
-            location,
-            image_url
-          )
-        `)
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (bookingsError) throw bookingsError;
-      setBookings(bookingsData || []);
-
-      // Fetch saved destinations
-      const { data: savedData, error: savedError } = await supabase
-        .from('saved_destinations')
-        .select(`
-          *,
-          destinations (
-            name,
-            location,
-            image_url,
-            price
-          )
-        `)
-        .eq('user_id', user?.id)
-        .order('saved_at', { ascending: false })
-        .limit(5);
-
-      if (savedError) throw savedError;
-      setSavedDestinations(savedData || []);
-
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Gagal memuat data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isAuthenticated, navigate]);
 
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/');
-      toast.success('Logout berhasil');
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Gagal logout');
-    }
+     try {
+       logout();
+       navigate('/');
+       toast.success('Logout berhasil');
+     } catch (error) {
+       console.error('Logout error:', error);
+       toast.error('Gagal logout');
+     }
   };
 
   const getStatusBadge = (status: string) => {

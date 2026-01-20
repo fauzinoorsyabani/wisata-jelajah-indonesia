@@ -1,11 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import pg from 'pg';
+import mysql from 'mysql2/promise';
 import authRoutes from './routes/auth.js';
 import destinationRoutes from './routes/destinations.js';
-
-
 
 dotenv.config();
 
@@ -20,17 +18,23 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationRoutes);
 
-
-
 // Database connection
-const { Pool } = pg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'wisata_db',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-pool.connect()
-  .then(() => console.log('Connected to PostgreSQL database'))
-  .catch(err => console.error('Database connection error:', err.stack));
+pool.getConnection()
+  .then(conn => {
+    console.log('Connected to MySQL database');
+    conn.release();
+  })
+  .catch(err => console.error('Database connection error:', err));
 
 // Basic Route
 app.get('/', (req, res) => {

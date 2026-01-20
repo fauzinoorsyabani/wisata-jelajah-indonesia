@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,46 +15,28 @@ const AdminLayout = () => {
 
   useEffect(() => {
     const checkAdminAccess = async () => {
-      try {
-        if (isLoading) return;
-        
-        if (!user) {
-          console.log('User not logged in, redirecting to login...');
-          // If not logged in, redirect to login page
-          navigate('/login?redirect=/admin');
-          return;
-        }
-        
-        console.log('Checking admin role for user:', user.id);
-        // Check if the user has admin role
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-          
-        if (error) {
-          console.error('Error fetching user role:', error);
-          toast.error('Terjadi kesalahan saat memverifikasi akses admin');
-          navigate('/');
-          return;
-        }
-        
-        if (!data || data.role !== 'admin') {
-          console.log('Access denied: User is not an admin', data);
-          toast.error('Akses ditolak: Anda bukan admin');
-          navigate('/');
-          return;
-        }
-        
-        console.log('Admin access granted:', data);
-        setIsAdmin(true);
-        setAdminCheckComplete(true);
-      } catch (error) {
-        console.error('Error in admin check:', error);
-        toast.error('Terjadi kesalahan saat memverifikasi akses');
-        navigate('/');
+      if (isLoading) return;
+      
+      if (!user) {
+        console.log('User not logged in, redirecting to login...');
+        navigate('/login?redirect=/admin');
+        return;
       }
+      
+      console.log('Checking admin role for user:', user.role);
+      
+      // Check if the user has admin role - assuming user object now has role from AuthContext
+      // The new AuthContext backend implementation should include 'role' in the user object
+      if (user.role !== 'admin') {
+        console.log('Access denied: User is not an admin', user.role);
+        toast.error('Akses ditolak: Anda bukan admin');
+        navigate('/');
+        return;
+      }
+      
+      console.log('Admin access granted');
+      setIsAdmin(true);
+      setAdminCheckComplete(true);
     };
 
     checkAdminAccess();

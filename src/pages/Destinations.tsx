@@ -7,7 +7,7 @@ import DestinationCard from '@/components/DestinationCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Map, Grid, SlidersHorizontal, Mountain, Palmtree, Building, Utensils, Ticket } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -71,15 +71,9 @@ const dummyDestinations: Destination[] = [
     category: 'Gunung'
   },
   {
-    id: 6,
-    name: 'Malioboro',
-    location: 'Yogyakarta',
-    image: 'https://images.unsplash.com/photo-1584810359583-96fc3448beaa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    rating: 4.5,
-    price: 'Gratis',
-    category: 'Budaya'
   }
 ];
+
 
 const categories = [
   { name: 'Semua', icon: Grid, value: 'all' },
@@ -93,49 +87,56 @@ const categories = [
 const Destinations = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [viewType, setViewType] = useState('grid');
-  const [destinations, setDestinations] = useState<Destination[]>(dummyDestinations);
-  const [loading, setLoading] = useState(true);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Semua');
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch destinations from Supabase
-    const fetchDestinations = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.from('destinations').select('*');
-        
-        if (error) {
-          console.error('Error fetching destinations:', error);
-          setDestinations(dummyDestinations);
-        } else if (data && data.length > 0) {
-          // Transform the Supabase data to match our Destination interface
-          const formattedDestinations: Destination[] = data.map(dest => ({
-            id: dest.id,
-            name: dest.name,
-            location: dest.location,
-            image: dest.image_url || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4',
-            rating: dest.rating || 4.5,
-            // Add default price since it's not in the Supabase schema
-            price: `Rp ${dest.rating ? (dest.rating * 50000).toLocaleString('id-ID') : '50.000'}`,
-            category: dest.category || 'Wisata Alam',
-            slug: dest.id // Use the ID as slug if not available
-          }));
-          setDestinations(formattedDestinations);
-        } else {
-          setDestinations(dummyDestinations);
-        }
-      } catch (error) {
-        console.error('Error fetching destinations:', error);
-        setDestinations(dummyDestinations);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDestinations();
   }, []);
+
+  const fetchDestinations = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('http://localhost:5000/api/destinations');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch destinations');
+      }
+
+      const data = await response.json();
+      
+      // Transform data if necessary to match Destination interface
+      const formattedDestinations: Destination[] = data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        image_url: item.image_url,
+        price: parseFloat(item.price),
+        location: item.location,
+        rating: parseFloat(item.rating) || 0,
+        category: item.category || 'Wisata',
+        reviews_count: 0
+      }));
+
+      setDestinations(formattedDestinations);
+    } catch (error) {
+      console.error('Error fetching destinations:', error);
+      toast({
+        title: "Gagal memuat destinasi",
+        description: "Menggunakan data lokal sebagai alternatif.",
+        variant: "destructive"
+      });
+      // Fallback to empty or dummy data if needed
+      setDestinations([]); 
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDestinationClick = (id: number | string) => {
     if (!isAuthenticated) {

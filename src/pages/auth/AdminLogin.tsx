@@ -9,7 +9,10 @@ import { Eye, EyeOff, Mail, Lock, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+import { useAuth } from '@/context/AuthContext';
+
 const AdminLogin = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -50,15 +53,12 @@ const AdminLogin = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store token (in localStorage for now)
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Use auth context login method
+      login(data.token, data.user);
 
-      toast({
-        title: "Login Successful",
-        description: "Welcome back, Admin!",
-      });
-
+      // Toast is handled by login context or we can show specific admin welcome here
+      // But context login shows generic "Login berhasil"
+      
       navigate('/admin');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

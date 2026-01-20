@@ -1,11 +1,8 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, Search as SearchIcon, LogOut, Settings } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/AuthContext';
-import { signOut } from '@/integrations/supabase/auth';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -17,52 +14,28 @@ import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const { user, isLoading, isAuthenticated } = useAuth();
-  const accountMenuRef = useRef(null);
-  const accountButtonRef = useRef(null);
+  
+  const { user, isAuthenticated, logout } = useAuth();
+  
+  // Admin role check is now simpler since it's in the user object from backend
+  const isAdmin = user?.role === 'admin';
+
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const accountButtonRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const { data: profileData, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (profileData && profileData.role === 'admin') {
-            setIsAdmin(true);
-          } else {
-            setIsAdmin(false);
-          }
-        } catch (error) {
-          console.error('Error checking admin role:', error);
-          setIsAdmin(false);
-        }
-      } else {
-        setIsAdmin(false);
-      }
-    };
-
-    checkAdminRole();
-  }, [isAuthenticated, user]);
 
   // Add click outside handler to close the account menu
   useEffect(() => {
-    function handleClickOutside(event) {
+    function handleClickOutside(event: MouseEvent) {
       if (
         accountMenuRef.current && 
-        !accountMenuRef.current.contains(event.target) &&
+        !accountMenuRef.current.contains(event.target as Node) &&
         accountButtonRef.current &&
-        !accountButtonRef.current.contains(event.target)
+        !accountButtonRef.current.contains(event.target as Node)
       ) {
         setShowAccountMenu(false);
       }
@@ -76,43 +49,21 @@ const Navbar = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    // Auth state changes will be handled by the AuthContext
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+    setShowAccountMenu(false);
+    navigate('/');
   };
 
-  const handleSearch = async (e) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      try {
-        const { data, error } = await supabase
-          .from('destinations')
-          .select('*')
-          .ilike('name', `%${searchQuery}%`)
-          .or(`location.ilike.%${searchQuery}%`);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          setSearchResults(data);
-          navigate(`/destinasi?q=${encodeURIComponent(searchQuery)}`);
-          setIsSearchOpen(false);
-          setSearchQuery('');
-        } else {
-          toast({
-            title: "Tidak ditemukan",
-            description: `Tidak ada destinasi dengan kata kunci "${searchQuery}"`,
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error("Error searching destinations:", error);
-        toast({
-          title: "Error",
-          description: "Terjadi kesalahan saat mencari destinasi",
-          variant: "destructive"
-        });
-      }
+      // For now, simple redirect since backend search isn't fully hooked up in frontend yet
+      // Ideally you would call the backend API here
+      navigate(`/destinasi?q=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+      setSearchQuery('');
     }
   };
 
@@ -212,10 +163,7 @@ const Navbar = () => {
                   )}
                   <div className="border-t border-gray-100 my-1"></div>
                   <button 
-                    onClick={() => {
-                      handleLogout();
-                      setShowAccountMenu(false);
-                    }}
+                    onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Logout
@@ -291,10 +239,7 @@ const Navbar = () => {
                     </Link>
                   )}
                   <button 
-                    onClick={() => {
-                      handleLogout();
-                      toggleMenu();
-                    }}
+                    onClick={handleLogout}
                     className="block w-full text-left py-2 font-medium text-gray-700 hover:text-primary"
                   >
                     <div className="flex items-center">

@@ -42,39 +42,34 @@ const DestinationsList = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
 
-  // Fetch destinations data from Supabase
+  // Fetch destinations data from backend
   useEffect(() => {
-    const fetchDestinations = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('destinations')
-          .select('*');
-        
-        if (error) {
-          throw error;
-        }
-        
-        // Map the data to include status (we'll store this in the future)
-        const statusOptions = ['Regular', 'Featured', 'Highlight', 'Special'];
-        const destinationsWithStatus = data.map(dest => ({
-          ...dest,
-          status: dest.category === 'Popular' ? 'Featured' : 
-                 dest.rating && dest.rating >= 4.5 ? 'Highlight' : 
-                 dest.price && dest.price > 100000 ? 'Special' : 'Regular'
-        }));
-        
-        setDestinations(destinationsWithStatus);
-      } catch (error) {
-        console.error('Error fetching destinations:', error);
-        toast.error('Gagal memuat data destinasi');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDestinations();
   }, []);
+
+  const fetchDestinations = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/api/destinations');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      
+      // Map the data to include status
+      const destinationsWithStatus = data.map((dest: any) => ({
+        ...dest,
+        status: dest.category === 'Popular' ? 'Featured' : 
+               dest.rating && dest.rating >= 4.5 ? 'Highlight' : 
+               dest.price && dest.price > 100000 ? 'Special' : 'Regular'
+      }));
+      
+      setDestinations(destinationsWithStatus);
+    } catch (error) {
+      console.error('Error fetching destinations:', error);
+      toast.error('Gagal memuat data destinasi');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -92,12 +87,11 @@ const DestinationsList = () => {
   const handleDelete = async (id: string, name: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus destinasi "${name}"?`)) {
       try {
-        const { error } = await supabase
-          .from('destinations')
-          .delete()
-          .eq('id', id);
+        const response = await fetch(`http://localhost:5000/api/destinations/${id}`, {
+            method: 'DELETE'
+        });
           
-        if (error) throw error;
+        if (!response.ok) throw new Error('Failed to delete');
         
         // Update the local state to remove the deleted destination
         setDestinations(destinations.filter(dest => dest.id !== id));

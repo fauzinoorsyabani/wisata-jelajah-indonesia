@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 interface LoginFormProps {
   redirectTo: string;
@@ -22,6 +23,7 @@ const LoginForm = ({ redirectTo }: LoginFormProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -72,13 +74,11 @@ const LoginForm = ({ redirectTo }: LoginFormProps) => {
       }
       
       // Store token
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      toast({
-        title: "Login Berhasil",
-        description: "Selamat datang kembali!",
-      });
+      // localStorage.setItem('token', data.token); // Handled by authContext
+      // localStorage.setItem('user', JSON.stringify(data.user)); // Handled by authContext
+      
+      // Update global auth state
+      login(data.token, data.user);
 
       // Redirect
       navigate(redirectTo || '/dashboard');

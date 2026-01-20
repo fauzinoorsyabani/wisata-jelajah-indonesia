@@ -1,6 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'sonner';
 
 // Public pages
@@ -31,6 +31,7 @@ import Help from './pages/Help';
 function App() {
   return (
     <Router>
+      <AuthProvider>
         <Routes>
           {/* Public routes */}
           <Route index element={<Home />} />
@@ -60,6 +61,7 @@ function App() {
           </Route>
         </Routes>
         <Toaster position="top-right" />
+      </AuthProvider>
     </Router>
   );
 }

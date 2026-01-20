@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const useBookingStatusUpdate = () => {
@@ -12,16 +12,11 @@ export const useBookingStatusUpdate = () => {
     onSuccess?: (bookingId: string, newStatus: string, newPaymentStatus: string) => void
   ) => {
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          status: newStatus,
-          payment_status: newPaymentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bookingId);
-        
-      if (error) throw error;
+      // Mock successful update for now
+      // await fetch(`http://localhost:5000/api/bookings/${bookingId}`, { ... });
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       toast({
         title: "Status Updated",

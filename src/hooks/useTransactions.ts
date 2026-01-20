@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Booking } from '@/components/admin/transactions/types';
 
@@ -15,58 +15,13 @@ export const useTransactions = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      // First count total bookings for pagination
-      const { count: totalCount, error: countError } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact', head: true });
-        
-      if (countError) {
-        throw countError;
-      }
+      // Mock data fetching since backend booking API is not ready
+      // await fetch('http://localhost:5000/api/bookings');
       
-      if (totalCount !== null) {
-        setTotalItems(totalCount);
-      }
-      
-      // Then get paginated bookings
-      const from = (currentPage - 1) * itemsPerPage;
-      const to = from + itemsPerPage - 1;
-      
-      const { data: bookingsData, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range(from, to);
-        
-      if (bookingsError) {
-        throw bookingsError;
-      }
-      
-      // Fetch destination names for each booking
-      let enrichedBookings = [];
-      for (const booking of bookingsData || []) {
-        // Get destination name
-        const { data: destinationData } = await supabase
-          .from('destinations')
-          .select('name')
-          .eq('id', booking.destination_id)
-          .single();
-          
-        // Get ticket type name
-        const { data: ticketTypeData } = await supabase
-          .from('ticket_types')
-          .select('name')
-          .eq('id', booking.ticket_type_id)
-          .single();
-          
-        enrichedBookings.push({
-          ...booking,
-          destination_name: destinationData?.name || 'Unknown Destination',
-          ticket_type_name: ticketTypeData?.name || 'Unknown Ticket Type'
-        });
-      }
+      const enrichedBookings: Booking[] = []; // Empty for now or mock if needed
       
       setBookings(enrichedBookings);
+      setTotalItems(0);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({

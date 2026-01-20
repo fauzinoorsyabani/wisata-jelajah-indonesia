@@ -13,14 +13,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { signOut } from '@/integrations/supabase/auth';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminSidebar = () => {
   const [collapsed, setCollapsed] = React.useState(false);
   const location = useLocation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { logout } = useAuth(); // Use logout from context
 
   const navItems = [
     {
@@ -85,7 +85,7 @@ const AdminSidebar = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      logout(); // Use context logout
       toast({
         title: "Logout berhasil",
         description: "Anda telah keluar dari akun admin"

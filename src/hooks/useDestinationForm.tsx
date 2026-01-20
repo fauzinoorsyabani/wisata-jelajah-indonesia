@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
 // Define the destination form schema
@@ -103,56 +103,45 @@ export const useDestinationForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle form submission
+  // Handle form submission
   const onSubmit = async (data: DestinationFormValues) => {
     setIsSubmitting(true);
     
     try {
-      // Create a destination object that matches our database schema
+      // Create a destination object that matches our database schema/backend expectation
+      // Note: Data transformation might be needed to match what backend expects
       const destinationData = {
         name: data.name,
         description: data.shortDescription,
-        long_description: data.fullDescription,
+        // long_description: data.fullDescription, // Backend might need adjustment to accept this or we map it
         location: `${data.city}, ${data.province}`,
-        full_location: data.fullAddress || `${data.district}, ${data.city}, ${data.province}`,
-        category: data.category,
         price: data.price,
-        operational_hours: JSON.stringify(data.operationalHours),
-        image_url: typeof data.mainImage === 'string' ? data.mainImage : null,
-        // Add other fields as needed
+        image_url: typeof data.mainImage === 'string' ? data.mainImage : 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0', // Dummy fallback
+        rating: 4.5, // Default
+        category: data.category
       };
       
-      // Insert data into Supabase
-      const { data: destinationResponse, error } = await supabase
-        .from('destinations')
-        .insert(destinationData)
-        .select()
-        .single();
-      
-      if (error) {
-        throw error;
+      console.log('Submitting to backend:', destinationData);
+
+      // Insert data into Backend
+       const response = await fetch('http://localhost:5000/api/destinations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(destinationData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save destination');
       }
       
-      // If we have tickets data, add them too
+      const destinationResponse = await response.json();
+      
+      // If we have tickets data, add them too (Mock for now, as backend needs endpoint)
       if (data.tickets && data.tickets.length > 0 && destinationResponse.id) {
-        const ticketsData = data.tickets
-          .filter(ticket => ticket.name && ticket.price) // Only process tickets that have a name and price
-          .map(ticket => ({
-            name: ticket.name || '',
-            price: parseInt(ticket.price || '0'),
-            description: ticket.description || '',
-            destination_id: destinationResponse.id
-          }));
-        
-        if (ticketsData.length > 0) {
-          const { error: ticketsError } = await supabase
-            .from('ticket_types')
-            .insert(ticketsData);
-          
-          if (ticketsError) {
-            console.error('Error adding tickets:', ticketsError);
-            toast.error('Destinasi berhasil disimpan tetapi gagal menambahkan tiket');
-          }
-        }
+        console.log('Skipping ticket creation - backend implementation pending');
       }
       
       toast.success("Destinasi berhasil disimpan!");

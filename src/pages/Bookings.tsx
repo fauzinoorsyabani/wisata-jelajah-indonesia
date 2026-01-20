@@ -14,15 +14,12 @@ import {
   Clock,
   MapPin,
   Ticket,
-  ArrowRight,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
+  User,
+  ChevronRight
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
 import {
   Select,
   SelectContent,
@@ -34,9 +31,8 @@ import {
 
 const Bookings = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [expandedBookingId, setExpandedBookingId] = useState(null);
@@ -47,34 +43,6 @@ const Bookings = () => {
       return;
     }
 
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        
-        const { data, error } = await supabase
-          .from('bookings')
-          .select(`
-            *,
-            destinations:destination_id (*),
-            ticket_types:ticket_type_id (*)
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        setBookings(data || []);
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load booking data",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
 
     fetchBookings();
   }, [isAuthenticated, navigate, toast, user]);

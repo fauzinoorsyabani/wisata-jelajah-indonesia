@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import DestinationCard from './DestinationCard';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 
 // Define the destination type for better type checking
 interface Destination {
@@ -114,32 +114,29 @@ const FeaturedDestinations = () => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  // Fetch destinations from Supabase
+  // Fetch destinations from Backend API
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('destinations')
-          .select('*')
-          .order('rating', { ascending: false })
-          .limit(8);
+        const response = await fetch('http://localhost:5000/api/destinations?limit=8');
+        const data = await response.json();
         
-        if (error) {
-          console.error('Error fetching destinations:', error);
-          setDestinations(fallbackDestinations);
-        } else if (data && data.length > 0) {
-          // Transform the Supabase data to match our DestinationCard props
-          const formattedDestinations: Destination[] = data.map(dest => ({
+        if (!response.ok) {
+           throw new Error('Failed to fetch destinations');
+        }
+
+        if (data && data.length > 0) {
+          // Transform the backend data directly, ensuring it matches the interface
+          const formattedDestinations: Destination[] = data.map((dest: any) => ({
             id: dest.id,
             name: dest.name,
             location: dest.location,
             image: dest.image_url || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4',
             rating: dest.rating || 4.5,
-            // Calculate a price based on rating
             price: `Rp ${dest.rating ? Math.round(dest.rating * 25000).toLocaleString('id-ID') : '50.000'}`,
             category: dest.category || 'Wisata Alam',
-            slug: dest.id.toString() // Use the ID as slug if not available
+            slug: dest.id.toString()
           }));
           setDestinations(formattedDestinations);
         } else {

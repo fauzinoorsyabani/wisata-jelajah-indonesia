@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import {
   MapPin,
   Calendar,
@@ -101,10 +101,11 @@ const DestinationDetail = () => {
     }
 
     // Set visitor info from user data if available
+    // Set visitor info from user data if available
     if (user) {
       if (user.email) setVisitorEmail(user.email);
-      if (user.user_metadata?.full_name) setVisitorName(user.user_metadata.full_name);
-      if (user.user_metadata?.phone) setVisitorPhone(user.user_metadata.phone);
+      // Fallback name since we stripped full_name from register for simplicity
+      // if (user.name) setVisitorName(user.name); 
       
       // Check if user is admin
       checkUserRole();
@@ -115,18 +116,8 @@ const DestinationDetail = () => {
 
   // Check if the user is an admin
   const checkUserRole = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user?.id)
-        .single();
-        
-      if (!error && data && data.role === 'admin') {
-        setIsAdmin(true);
-      }
-    } catch (error) {
-      console.error("Error checking user role:", error);
+    if (user && user.role === 'admin') {
+      setIsAdmin(true);
     }
   };
 
@@ -135,25 +126,14 @@ const DestinationDetail = () => {
       setLoading(true);
       console.log("Fetching destination with identifier:", identifier);
 
-      // Try to fetch by id first
-      let { data, error } = await supabase
-        .from('destinations')
-        .select('*')
-        .eq('id', identifier)
-        .maybeSingle();
+      // Fetch from our new backend
+      const response = await fetch(`http://localhost:5000/api/destinations/${identifier}`);
       
-      // If not found by ID, try to find by slug if the identifier could be a slug
-      if (!data && !error) {
-        const { data: slugData, error: slugError } = await supabase
-          .from('destinations')
-          .select('*')
-          .eq('name', identifier)
-          .maybeSingle();
-          
-        if (slugData && !slugError) {
-          data = slugData;
-        }
+      if (!response.ok) {
+        throw new Error('Failed to fetch destination');
       }
+      
+      const data = await response.json();
 
       if (data) {
         console.log("Found destination:", data);
@@ -163,70 +143,50 @@ const DestinationDetail = () => {
           name: data.name,
           location: data.location,
           description: data.description,
-          amenities: 'Fasilitas lengkap tersedia', // Default value since this field doesn't exist in DB
-          address: data.full_location || data.location, // Use full_location as address fallback
-          operational_hours: data.operational_hours || '08:00 - 18:00',
-          best_time_to_visit: 'Sepanjang tahun', // Default value since this field doesn't exist in DB
-          google_maps_url: '', // Default value since this field doesn't exist in DB
+          amenities: 'Fasilitas lengkap tersedia', // Default value
+          address: data.location, // Use location as address fallback
+          operational_hours: '08:00 - 18:00',
+          best_time_to_visit: 'Sepanjang tahun', 
+          google_maps_url: '', 
           image_url: data.image_url || '',
-          price: data.price || 0,
-          category: data.category || '',
-          rating: data.rating || 0,
-          long_description: data.long_description || data.description,
-          full_location: data.full_location || data.location,
-          reviews_count: data.reviews_count || 0,
-          slug: data.name.toLowerCase().replace(/\s+/g, '-'), // Generate slug from name
+          price: parseFloat(data.price) || 0,
+          category: 'Wisata',
+          rating: parseFloat(data.rating) || 0,
+          long_description: data.description,
+          full_location: data.location,
+          reviews_count: 0,
+          slug: data.name ? data.name.toLowerCase().replace(/\s+/g, '-') : '', 
           created_at: data.created_at || '',
-          updated_at: data.updated_at || ''
+          updated_at: data.created_at || ''
         };
         
         setDestination(typedDestination);
         
-        // Fetch ticket types
-        const { data: ticketData, error: ticketError } = await supabase
-          .from('ticket_types')
-          .select('*')
-          .eq('destination_id', data.id);
-
-        if (!ticketError && ticketData && ticketData.length > 0) {
-          console.log("Found tickets:", ticketData);
-          // Create properly typed ticket objects with default values
-          const typedTickets: TicketType[] = ticketData.map(ticket => ({
-            id: ticket.id,
-            name: ticket.name,
-            price: typeof ticket.price === 'number' ? ticket.price : 0,
-            description: ticket.description || '',
-            capacity: 'Tidak terbatas', // Default value since this field doesn't exist in DB
-            validity_duration: '1', // Default value since this field doesn't exist in DB
-            destination_id: ticket.destination_id || data.id,
-            created_at: ticket.created_at || '',
-            updated_at: ticket.updated_at || ''
-          }));
+        // Mock ticket types for now as backend doesn't support them yet
+        const typedTickets: TicketType[] = [{
+            id: 'ticket-1',
+            name: 'Tiket Masuk Reguler',
+            price: parseFloat(data.price) || 0,
+            description: 'Tiket masuk standar untuk satu orang',
+            capacity: 'Tidak terbatas',
+            validity_duration: '1',
+            destination_id: data.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        }];
           
-          setTicketTypes(typedTickets);
-          setSelectedTicket(typedTickets[0]); // Select first ticket by default
-        } else {
-          // If no tickets found, display message to user that tickets are not available
-          console.log("No tickets found for destination");
-          setTicketTypes([]);
-          setSelectedTicket(null);
-        }
+        setTicketTypes(typedTickets);
+        setSelectedTicket(typedTickets[0]); 
 
-        // Check if destination is saved
-        if (isAuthenticated && user) {
-          const { data: savedData } = await supabase
-            .from('saved_destinations')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('destination_id', data.id)
-            .maybeSingle();
-            
-          setIsSaved(!!savedData);
-        }
+        // Check if destination is saved (Local check only for now or stub)
+        // setIsSaved(false); // To implement later with backend
       } else {
-        console.log("Destination not found, using dummy data");
-        // If no destination found, use dummy data with a valid UUID
-        const dummyData: DestinationType = {
+         throw new Error("Data empty");
+      }
+    } catch (error) {
+      console.error("Error fetching destination details:", error);
+      // Fallback to dummy if backend fails or returns 404
+       const dummyData: DestinationType = {
           id: identifier,
           name: 'Pantai Kuta',
           location: 'Bali',
@@ -245,20 +205,9 @@ const DestinationDetail = () => {
           reviews_count: 150,
           slug: 'pantai-kuta'
         };
-        
         setDestination(dummyData);
-        
-        // For dummy data, don't create fake tickets - let the edge function handle it
         setTicketTypes([]);
         setSelectedTicket(null);
-      }
-    } catch (error) {
-      console.error("Error fetching destination details:", error);
-      toast({
-        title: "Error",
-        description: "Gagal memuat detail destinasi",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }

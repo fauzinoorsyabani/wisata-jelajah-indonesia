@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -8,17 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminRegister = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
+    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: ''
+    adminCode: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,55 +31,67 @@ const AdminRegister = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setIsLoading(true);
+
+    const { fullName, email, password, confirmPassword, adminCode } = formData;
+
     // Simple validation
-    if (!formData.email || !formData.password || !formData.fullName) {
-      toast.error('Semua field harus diisi');
+    if (!email || !password || !fullName || !adminCode) {
+      toast({
+        title: "Perhatian",
+        description: "Semua field harus diisi",
+        variant: "destructive"
+      });
+      setIsLoading(false);
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Password tidak cocok');
+    if (password !== confirmPassword) {
+      toast({
+        title: "Perhatian",
+        description: "Password dan konfirmasi password tidak cocok",
+        variant: "destructive"
+      });
+      setIsLoading(false);
       return;
     }
-
-    setLoading(true);
 
     try {
-      // Register the user with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName,
-            role: 'admin'
-          }
-        }
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          role: 'admin',
+          adminKey: adminCode
+        }),
       });
 
-      if (authError) throw authError;
+      const data = await response.json();
 
-      if (authData.user) {
-        // Set role in profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ role: 'admin' })
-          .eq('id', authData.user.id);
-
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-          throw new Error('Failed to set admin role');
-        }
-
-        toast.success('Pendaftaran admin berhasil. Silakan login.');
-        navigate('/login');
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
       }
+
+      toast({
+        title: "Admin Terdaftar",
+        description: "Akun admin berhasil dibuat. Silakan login.",
+      });
+      
+      navigate('/login'); 
+      
     } catch (error: any) {
-      console.error('Registration error:', error);
-      toast.error(error.message || 'Gagal mendaftarkan akun');
+      toast({
+        title: "Registrasi Gagal",
+        description: error.message || "Terjadi kesalahan saat mendaftar",
+        variant: "destructive"
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -122,6 +135,18 @@ const AdminRegister = () => {
                 </div>
                 
                 <div className="space-y-2">
+                  <Label htmlFor="adminCode">Kode Admin</Label>
+                  <Input
+                    id="adminCode"
+                    type="password"
+                    placeholder="Masukkan kode rahasia admin"
+                    value={formData.adminCode}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
@@ -149,9 +174,9 @@ const AdminRegister = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={loading}
+                  disabled={isLoading}
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Mendaftar...

@@ -1,16 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { Loader2, Upload, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from '@/components/ui/separator';
 import { Clock, Check, AlertCircle, Download, Printer } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react'; 
@@ -20,106 +20,68 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const Payment = () => {
+  const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
-  const [booking, setBooking] = useState(null);
-  const [destination, setDestination] = useState(null);
-  const [ticketType, setTicketType] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [paymentProof, setPaymentProof] = useState(null);
-  const [fileUploading, setFileUploading] = useState(false);
   
-  // Extract bookingId from location state or from URL params
-  const bookingId = location.state?.bookingId || new URLSearchParams(location.search).get('id');
+  const [booking, setBooking] = useState<any>(null);
+  const [loading, setLoading] = useState(false); // Changed to false as we don't fetch from DB
+  const [uploading, setUploading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: '/payment' } });
+      navigate('/login', { state: { from: `/payment/${id}` } });
       return;
     }
 
-    if (!bookingId) {
+    // Mock booking data based on ID
+    // In real app, fetch from backend via API
+    if (id) {
+      // Simulate fetching booking data
+      setLoading(true);
+      setTimeout(() => {
+        setBooking({
+          id: id,
+          booking_number: `WJL-${id.substring(0, 4).toUpperCase()}`,
+          destination_id: 'dest-123',
+          ticket_type_id: 'ticket-abc',
+          visit_date: '2024-12-25T00:00:00Z',
+          quantity: 2,
+          total_price: 150000,
+          payment_status: 'pending', // or 'waiting_confirmation', 'paid'
+          status: 'pending',
+          payment_proof: null,
+          user_id: user?.id || 'mock-user-id',
+          created_at: '2024-11-01T10:00:00Z',
+          updated_at: '2024-11-01T10:00:00Z',
+        });
+        setLoading(false);
+      }, 1000);
+    } else {
       toast({
         title: "Error",
         description: "Booking ID tidak ditemukan",
         variant: "destructive"
       });
       navigate('/bookings');
-      return;
     }
+  }, [isAuthenticated, navigate, id, toast, user]);
 
-    const fetchBookingDetails = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch booking details
-        const { data: bookingData, error: bookingError } = await supabase
-          .from('bookings')
-          .select('*')
-          .eq('id', bookingId)
-          .single();
-        
-        if (bookingError) throw bookingError;
-        if (!bookingData) throw new Error('Booking not found');
-        
-        setBooking(bookingData);
-        
-        // Fetch destination details
-        const { data: destinationData, error: destinationError } = await supabase
-          .from('destinations')
-          .select('*')
-          .eq('id', bookingData.destination_id)
-          .single();
-        
-        if (destinationError) throw destinationError;
-        setDestination(destinationData);
-        
-        // Fetch ticket type details
-        const { data: ticketData, error: ticketError } = await supabase
-          .from('ticket_types')
-          .select('*')
-          .eq('id', bookingData.ticket_type_id)
-          .single();
-        
-        if (ticketError) throw ticketError;
-        setTicketType(ticketData);
-        
-      } catch (error) {
-        console.error('Error fetching booking details:', error);
-        toast({
-          title: "Error",
-          description: "Gagal memuat detail booking",
-          variant: "destructive"
-        });
-        navigate('/bookings');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookingDetails();
-  }, [bookingId, isAuthenticated, navigate, toast]);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          title: "File terlalu besar",
-          description: "Ukuran file maksimal 5MB",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      setPaymentProof(file);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      // Optional: Add file size/type validation here if needed
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
 
-  const uploadPaymentProof = async () => {
-    if (!paymentProof) {
+  const handleUpload = async () => {
+    if (!file || !id) {
       toast({
         title: "Error",
         description: "Silakan pilih file bukti pembayaran",
@@ -128,52 +90,31 @@ const Payment = () => {
       return;
     }
     
+    setUploading(true);
+    
     try {
-      setFileUploading(true);
+      // Mock File Upload
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call delay
       
-      // Upload file to storage
-      const fileName = `payment_proof/${booking.id}_${Date.now()}_${paymentProof.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('booking_files')
-        .upload(fileName, paymentProof);
-      
-      if (uploadError) throw uploadError;
-      
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('booking_files')
-        .getPublicUrl(fileName);
-      
-      // Update booking with payment proof URL
-      const { error: updateError } = await supabase
-        .from('bookings')
-        .update({ 
-          payment_proof: publicUrlData.publicUrl,
-          payment_status: 'waiting_confirmation',
-          updated_at: new Date().toISOString() // Fix type error: convert Date to string
-        })
-        .eq('id', booking.id);
-      
-      if (updateError) throw updateError;
-      
-      // Update local state
+      // Simulate updating booking status
       setBooking(prev => ({
         ...prev,
-        payment_proof: publicUrlData.publicUrl,
-        payment_status: 'waiting_confirmation'
+        payment_status: 'waiting_confirmation',
+        payment_proof: 'mock-url-to-payment-proof.jpg', // Simulate URL
+        updated_at: new Date().toISOString()
       }));
-      
+
       toast({
-        title: "Berhasil",
-        description: "Bukti pembayaran berhasil diunggah",
-        variant: "default"
+        title: "Bukti pembayaran terkirim",
+        description: "Kami akan memverifikasi pembayaran Anda.",
       });
       
+      // navigate('/payment-success'); // Uncomment if you have a success page
     } catch (error) {
       console.error('Error uploading payment proof:', error);
       toast({
-        title: "Error",
-        description: "Gagal mengunggah bukti pembayaran",
+        title: "Gagal Mengunggah",
+        description: "Terjadi kesalahan saat mengunggah bukti pembayaran.",
         variant: "destructive"
       });
     } finally {
