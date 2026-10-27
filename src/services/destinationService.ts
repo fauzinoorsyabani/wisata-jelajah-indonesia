@@ -1,3 +1,5 @@
+import { tidbService } from './tidbService';
+
 export interface TicketType {
   id: string;
   name: string;
@@ -434,7 +436,27 @@ class DestinationService {
   }
 
   async getAll(): Promise<Destination[]> {
-    // Attempt backend sync if online, otherwise use local storage
+    // 1. Attempt TiDB Cloud Serverless sync
+    try {
+      const tidbData = await tidbService.getDestinations();
+      if (tidbData && tidbData.length > 0) {
+        const mapped: Destination[] = tidbData.map((item: any) => ({
+          ...item,
+          city: item.city || item.location.split(',')[0],
+          image: item.image_url || item.image,
+          price: typeof item.price === 'number' ? `Rp ${item.price.toLocaleString('id-ID')}` : String(item.price),
+          raw_price: typeof item.price === 'number' ? item.price : Number(String(item.price).replace(/[^0-9]/g, '')) || 15000,
+          is_featured: Boolean(item.is_popular || item.is_featured),
+          is_tasikmalaya: Boolean(item.location?.toLowerCase().includes('tasikmalaya'))
+        }));
+        this.saveDestinationsToStorage(mapped);
+        return mapped;
+      }
+    } catch {
+      // Fallback to local
+    }
+
+    // 2. Attempt local backend sync if running
     try {
       const response = await fetch('http://localhost:5000/api/destinations', {
         headers: { 'Content-Type': 'application/json' },
@@ -615,15 +637,25 @@ class DestinationService {
     };
     all.unshift(newBooking);
     this.saveBookings(all);
+
+    // Sync to TiDB Cloud in background
+    tidbService.createBooking(newBooking).catch(err => {
+      console.warn('Background sync to TiDB error:', err);
+    });
+
     return newBooking;
   }
 
-  updateBookingStatus(id: string, status: 'pending' | 'paid' | 'cancelled'): boolean {
+  updateBookingStatus(id: string, status: 'pending' | 'paid' | 'used' | 'cancelled'): boolean {
     const all = this.getBookings();
     const index = all.findIndex(b => b.id === id);
     if (index === -1) return false;
     all[index].status = status;
     this.saveBookings(all);
+
+    // Sync to TiDB Cloud in background
+    tidbService.updateBookingStatus(id, status).catch(() => {});
+
     return true;
   }
 }

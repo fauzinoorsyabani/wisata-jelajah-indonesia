@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   X,
+  Crown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ const AdminSidebar = () => {
   const location = useLocation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isSuperAdmin } = useAuth();
 
   const navItems = [
     {
@@ -65,6 +66,11 @@ const AdminSidebar = () => {
       icon: Settings,
       href: '/admin/settings',
     },
+    ...(isSuperAdmin ? [{
+      title: 'Super Admin Master',
+      icon: Crown,
+      href: '/super-admin',
+    }] : []),
   ];
 
   const [expandedItem, setExpandedItem] = useState<string | null>(null);

@@ -35,6 +35,8 @@ export const TasikmalayaSpotlight: React.FC = () => {
     if (activeCategory === 'all') return true;
     if (activeCategory === 'waterpark') {
       return (
+        dest.category.toLowerCase().includes('wahana air') ||
+        dest.category.toLowerCase().includes('air') ||
         dest.category.toLowerCase().includes('hiburan') || 
         dest.name.toLowerCase().includes('waterpark') || 
         dest.name.toLowerCase().includes('renang')

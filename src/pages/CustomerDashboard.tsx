@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { destinationService } from '@/services/destinationService';
 
 interface Booking {
   id: string;
@@ -60,46 +61,51 @@ const CustomerDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Mock API Fetch for Bookings
-        const mockBookings: Booking[] = [
-          {
-            id: '1',
-            booking_number: 'B001',
-            destination_id: 'd1',
-            visit_date: '2024-06-01',
-            quantity: 2,
-            total_price: 500000.00,
-            status: 'confirmed',
-            payment_status: 'paid',
-            destinations: {
-              name: 'Raja Ampat',
-              location: 'Papua Barat',
-              image_url: 'https://images.unsplash.com/photo-1573790387438-4da905039392?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
-            }
+        const realBookings = destinationService.getBookings();
+        const formattedBookings: Booking[] = realBookings.map(b => ({
+          id: b.id,
+          booking_number: b.booking_code,
+          destination_id: b.destination_id,
+          visit_date: b.ticket_date,
+          quantity: b.quantity,
+          total_price: b.total_amount,
+          status: b.status === 'used' ? 'used' : (b.status === 'paid' ? 'confirmed' : 'pending'),
+          payment_status: b.status === 'paid' || b.status === 'used' ? 'paid' : 'unpaid',
+          destinations: {
+            name: b.destination_name,
+            location: b.destination_location,
+            image_url: b.destination_image
           }
-        ];
+        }));
         
-        // Mock API Fetch for Saved Destinations
+        // Mock / Saved Destinations (Tasikmalaya)
         const mockSaved: SavedDestination[] = [
            {
              id: 's1',
-             destination_id: 'd2',
-             saved_at: '2024-05-20',
+             destination_id: 'tasik-galunggung',
+             saved_at: '2026-03-20',
              destinations: {
-               name: 'Gunung Bromo',
-               location: 'Jawa Timur',
-               image_url: 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-               price: 150000
+               name: 'Gunung Galunggung & Kawah Panas',
+               location: 'Tasikmalaya, Jawa Barat',
+               image_url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&fm=webp&w=400&q=75',
+               price: 15000
+             }
+           },
+           {
+             id: 's2',
+             destination_id: 'tasik-teejay',
+             saved_at: '2026-03-22',
+             destinations: {
+               name: 'TeeJay Waterpark (Plaza Asia)',
+               location: 'Tasikmalaya Kota',
+               image_url: 'https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?auto=format&fit=crop&fm=webp&w=400&q=75',
+               price: 30000
              }
            }
         ];
 
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        setBookings(mockBookings);
+        setBookings(formattedBookings);
         setSavedDestinations(mockSaved);
-
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Gagal memuat data');

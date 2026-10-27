@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { useAuth } from '@/context/AuthContext';
+import { userService } from '@/services/userService';
 
 const AdminLogin = () => {
   const { login } = useAuth();
@@ -58,19 +59,36 @@ const AdminLogin = () => {
       // Backend unavailable: fallback to demo admin login
     }
 
-    // Client fallback for demo/offline admin access
+    // Verification against userService registry
+    const existing = userService.getUserByEmail(formData.email);
+    if (existing && existing.role === 'customer') {
+      setError('Akses ditolak: Akun ini terdaftar sebagai Wisatawan. Silakan masuk melalui halaman login pengunjung di /login.');
+      setIsLoading(false);
+      return;
+    }
+
+    const isSuper = formData.email === 'superadmin@wisata.id' || existing?.role === 'super_admin';
+    const isAdmin = formData.email === 'admin@wisata.id' || existing?.role === 'admin';
+
+    if (!isSuper && !isAdmin) {
+      setError('Kredensial pengelola tidak valid atau belum terdaftar. Silakan hubungi Super Admin.');
+      setIsLoading(false);
+      return;
+    }
+
     const adminUser = {
-      id: 'admin_demo_1',
-      name: 'Admin Wisata Indonesia',
-      email: formData.email || 'admin@wisata.id',
-      role: 'admin'
+      id: existing ? existing.id : (isSuper ? 'usr_super_1' : 'usr_admin_1'),
+      name: existing ? existing.name : (isSuper ? 'Master Super Admin' : 'Admin Wisata Indonesia'),
+      email: formData.email,
+      role: isSuper ? ('super_admin' as const) : ('admin' as const)
     };
+
     login(`admin_token_${Date.now()}`, adminUser);
     toast({
-      title: "Login Admin Berhasil",
-      description: "Selamat datang di Panel Administrasi Wisata Jelajah Indonesia."
+      title: isSuper ? "Login Super Admin Berhasil" : "Login Admin Berhasil",
+      description: isSuper ? "Selamat datang di Panel Master Super Admin." : "Selamat datang di Panel Administrasi Wisata Jelajah Indonesia."
     });
-    navigate('/admin');
+    navigate(isSuper ? '/super-admin' : '/admin');
     setIsLoading(false);
   };
 

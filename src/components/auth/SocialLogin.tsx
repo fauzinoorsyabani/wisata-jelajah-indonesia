@@ -1,32 +1,18 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldCheck, UserCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 const SocialLogin = () => {
   const [loading, setLoading] = useState(false);
-  const { loginWithGoogle, loginAsDemoAdmin, loginAsDemoUser } = useAuth();
-  const navigate = useNavigate();
+  const { loginWithGoogle } = useAuth();
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       await loginWithGoogle();
-      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoAdmin = () => {
-    loginAsDemoAdmin();
-    navigate('/admin');
-  };
-
-  const handleDemoUser = () => {
-    loginAsDemoUser();
-    navigate('/dashboard');
   };
 
   return (
@@ -36,7 +22,7 @@ const SocialLogin = () => {
           <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500 font-medium">Atau masuk dengan Clerk & Google</span>
+          <span className="px-2 bg-white text-gray-500 font-medium">Atau lanjutkan dengan</span>
         </div>
       </div>
       
@@ -44,7 +30,7 @@ const SocialLogin = () => {
         <Button 
           variant="outline" 
           type="button" 
-          className="w-full flex items-center justify-center border-gray-300 hover:bg-gray-50 py-2.5"
+          className="w-full flex items-center justify-center border-gray-300 hover:bg-gray-50 py-2.5 transition-all shadow-sm"
           onClick={handleGoogleLogin}
           disabled={loading}
         >
@@ -56,36 +42,10 @@ const SocialLogin = () => {
               <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
             </g>
           </svg>
-          <span className="font-medium text-gray-700">
-            {loading ? 'Menghubungkan Google...' : 'Masuk dengan Akun Google'}
+          <span className="font-semibold text-gray-700">
+            {loading ? 'Menghubungkan Akun Google...' : 'Lanjutkan dengan Google'}
           </span>
         </Button>
-      </div>
-
-      <div className="pt-2 border-t border-dashed border-gray-200">
-        <p className="text-xs text-center text-gray-500 mb-2">Akses Cepat Pengujian (1-Klik)</p>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs bg-slate-50 border-slate-300 hover:bg-slate-100 text-slate-700"
-            onClick={handleDemoAdmin}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 mr-1 text-primary" />
-            Mode Admin
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs bg-slate-50 border-slate-300 hover:bg-slate-100 text-slate-700"
-            onClick={handleDemoUser}
-          >
-            <UserCheck className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-            Mode Wisatawan
-          </Button>
-        </div>
       </div>
     </div>
   );

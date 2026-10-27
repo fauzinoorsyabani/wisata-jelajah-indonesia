@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { userService } from '@/services/userService';
 
 interface LoginFormProps {
   redirectTo: string;
@@ -78,17 +79,31 @@ const LoginForm = ({ redirectTo }: LoginFormProps) => {
       // Backend unavailable: fallback to client auth
     }
 
-    // Client-side authentication fallback (ideal for static deployment or offline dev)
-    const isAdmin = formData.email.toLowerCase().includes('admin');
+    // Client-side authentication fallback: strictly for tourists (customers)
+    const existing = userService.getUserByEmail(formData.email);
+    let role: 'customer' | 'admin' | 'super_admin' = 'customer';
+    let name = formData.email.split('@')[0];
+
+    if (existing) {
+      role = existing.role;
+      name = existing.name;
+    }
+
     const fallbackUser = {
-      id: `usr_${Date.now()}`,
+      id: existing ? existing.id : `usr_${Date.now()}`,
       email: formData.email,
-      name: isAdmin ? 'Administrator' : formData.email.split('@')[0],
-      role: isAdmin ? 'admin' : 'customer'
+      name,
+      role
     };
 
     login(`token_${Date.now()}`, fallbackUser);
-    navigate(isAdmin ? '/admin' : (redirectTo || '/dashboard'));
+    if (role === 'super_admin') {
+      navigate('/super-admin');
+    } else if (role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate(redirectTo || '/dashboard');
+    }
     setIsLoading(false);
   };
   
