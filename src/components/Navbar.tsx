@@ -76,8 +76,20 @@ const Navbar = () => {
       <div className="container-custom flex items-center justify-between h-16">
         {/* Logo */}
         <div className="flex items-center">
-          <NavLink to="/" className="flex items-center">
-            <span className="text-xl font-poppins font-bold text-primary">Wisata<span className="text-secondary">Jelajah</span></span>
+          <NavLink to="/" className="flex items-center gap-2.5 group">
+            <img 
+              src="/logo.png" 
+              alt="Wisata Jelajah Indonesia Logo" 
+              className="h-10 w-10 object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm" 
+            />
+            <div className="flex flex-col">
+              <span className="text-xl font-poppins font-extrabold text-primary leading-tight tracking-tight">
+                Wisata<span className="text-emerald-600">Jelajah</span>
+              </span>
+              <span className="text-[9px] tracking-widest uppercase font-semibold text-gray-400 -mt-0.5">
+                Indonesia
+              </span>
+            </div>
           </NavLink>
         </div>
 

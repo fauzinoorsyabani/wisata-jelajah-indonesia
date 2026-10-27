@@ -1,12 +1,10 @@
-
 import { useState } from 'react';
-import { Star, MapPin } from 'lucide-react';
+import { Star, MapPin, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import OptimizedImage from './ui/OptimizedImage';
 
 interface DestinationCardProps {
-  id: string | number;  // Allow both string and number IDs
+  id: string | number;
   name: string;
   location: string;
   image: string;
@@ -14,6 +12,7 @@ interface DestinationCardProps {
   price: string;
   category: string;
   slug?: string;
+  is_tasikmalaya?: boolean;
   onClick?: () => void;
 }
 
@@ -26,98 +25,93 @@ const DestinationCard = ({
   price,
   category,
   slug,
+  is_tasikmalaya,
   onClick
 }: DestinationCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
+
+  const isTasik = is_tasikmalaya || location.toLowerCase().includes('tasikmalaya');
 
   const handleClick = () => {
     if (onClick) {
       onClick();
     } else {
-      // Allow basic card click for all users
       const destinationPath = slug ? `/destinasi/${slug}` : `/destinasi/${id}`;
       navigate(destinationPath);
     }
   };
 
-  const handleDetailClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the card's onClick from firing
-    
-    if (!isAuthenticated) {
-      toast({
-        title: "Login Diperlukan",
-        description: "Silakan login terlebih dahulu untuk melihat detail destinasi",
-        variant: "default"
-      });
-      navigate('/login', { state: { from: slug ? `/destinasi/${slug}` : `/destinasi/${id}` } });
-      return;
-    }
-
-    // User is authenticated, navigate to destination detail
-    const destinationPath = slug ? `/destinasi/${slug}` : `/destinasi/${id}`;
-    navigate(destinationPath);
-  };
-
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer"
+      className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col border border-gray-100"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
-      {/* Image Container */}
-      <div className="relative h-48 overflow-hidden">
-        <img
+      {/* Image Container with WebP Optimization & Shimmer */}
+      <div className="relative h-52 w-full overflow-hidden bg-gray-100">
+        <OptimizedImage
           src={image}
           alt={name}
-          className={`w-full h-full object-cover transition-transform duration-700 ${
-            isHovered ? 'scale-110' : 'scale-100'
+          className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
+            isHovered ? 'scale-105' : 'scale-100'
           }`}
         />
-        <div className="absolute top-3 left-3 bg-accent/90 text-white text-xs font-medium py-1 px-2 rounded">
-          {category}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+          <span className="bg-primary/90 backdrop-blur-sm text-white text-xs font-semibold py-1 px-2.5 rounded-full shadow-sm">
+            {category}
+          </span>
+          {isTasik && (
+            <span className="bg-amber-500/90 backdrop-blur-sm text-white text-xs font-semibold py-1 px-2.5 rounded-full shadow-sm flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              Tasikmalaya
+            </span>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold text-lg leading-tight mb-1">{name}</h3>
-            <div className="flex items-center text-sm text-gray-600 mb-2">
-              <MapPin className="h-3.5 w-3.5 mr-1" />
-              <span>{location}</span>
-            </div>
+      <div className="p-5 flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex items-center text-xs text-gray-500 mb-1.5 font-medium">
+            <MapPin className="h-3.5 w-3.5 mr-1 text-primary shrink-0" />
+            <span className="truncate">{location}</span>
+          </div>
+
+          <h3 className="font-bold text-gray-900 text-lg leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-1">
+            {name}
+          </h3>
+
+          {/* Rating */}
+          <div className="flex items-center gap-1 mb-3">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`h-4 w-4 ${
+                  i < Math.floor(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200'
+                }`}
+              />
+            ))}
+            <span className="ml-1 text-xs font-semibold text-gray-700">{Number(rating).toFixed(1)}</span>
           </div>
         </div>
 
-        {/* Rating */}
-        <div className="flex items-center mb-3">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`h-4 w-4 ${
-                i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-              }`}
-            />
-          ))}
-          <span className="ml-1 text-sm text-gray-600">{rating.toFixed(1)}</span>
-        </div>
-
-        {/* Price and CTA */}
-        <div className="flex items-center justify-between mt-3">
+        {/* Price and Action Button */}
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-2">
           <div>
-            <p className="text-xs text-gray-500">Mulai dari</p>
-            <p className="font-semibold text-primary">{price}</p>
+            <p className="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Tiket Masuk</p>
+            <p className="font-bold text-primary text-base">{price}</p>
           </div>
           <button 
-            className="bg-secondary hover:bg-secondary/90 text-white text-sm py-1.5 px-3 rounded transition-colors"
-            onClick={handleDetailClick}
+            type="button"
+            className="bg-primary text-white text-xs font-medium py-2 px-4 rounded-lg shadow-sm group-hover:bg-primary/90 transition-all hover:scale-105"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick();
+            }}
           >
-            Lihat Detail
+            Pesan Tiket
           </button>
         </div>
       </div>

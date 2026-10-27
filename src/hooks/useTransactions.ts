@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
-// import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Booking } from '@/components/admin/transactions/types';
+import { destinationService } from '@/services/destinationService';
 
 export const useTransactions = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -15,13 +14,28 @@ export const useTransactions = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      // Mock data fetching since backend booking API is not ready
-      // await fetch('http://localhost:5000/api/bookings');
+      const raw = destinationService.getBookings();
+      const enriched: Booking[] = raw.map(b => ({
+        id: b.id,
+        booking_number: b.booking_code,
+        user_id: String(b.user_id),
+        visitor_name: b.user_name,
+        visitor_email: b.user_email,
+        visitor_phone: '08123456789',
+        destination_id: String(b.destination_id),
+        destination_name: b.destination_name,
+        ticket_type_id: b.ticket_type,
+        ticket_type_name: b.ticket_type,
+        quantity: b.quantity,
+        total_price: b.total_amount,
+        visit_date: b.ticket_date,
+        payment_status: b.status === 'paid' ? 'paid' : b.status === 'pending' ? 'unpaid' : 'cancelled',
+        status: b.status === 'paid' ? 'confirmed' : b.status,
+        created_at: b.created_at
+      }));
       
-      const enrichedBookings: Booking[] = []; // Empty for now or mock if needed
-      
-      setBookings(enrichedBookings);
-      setTotalItems(0);
+      setBookings(enriched);
+      setTotalItems(enriched.length);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -35,6 +49,11 @@ export const useTransactions = () => {
   };
 
   const handleBookingUpdated = (bookingId: string, newStatus: string, newPaymentStatus: string) => {
+    destinationService.updateBookingStatus(
+      bookingId, 
+      newPaymentStatus === 'paid' ? 'paid' : newPaymentStatus === 'cancelled' ? 'cancelled' : 'pending'
+    );
+
     setBookings(prevBookings => 
       prevBookings.map(booking => 
         booking.id === bookingId 

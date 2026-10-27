@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 // import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { destinationService } from '@/services/destinationService';
 
 // Define the destination form schema
 export const destinationFormSchema = z.object({
@@ -103,55 +104,39 @@ export const useDestinationForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle form submission
-  // Handle form submission
   const onSubmit = async (data: DestinationFormValues) => {
     setIsSubmitting(true);
     
     try {
-      // Create a destination object that matches our database schema/backend expectation
-      // Note: Data transformation might be needed to match what backend expects
-      const destinationData = {
+
+      const imageUrl = typeof data.mainImage === 'string' && data.mainImage.trim() 
+        ? data.mainImage 
+        : 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&fm=webp&w=800&q=80';
+
+      const facilitiesList = data.facilities 
+        ? Object.entries(data.facilities)
+            .filter(([_, enabled]) => enabled)
+            .map(([name]) => name.charAt(0).toUpperCase() + name.slice(1))
+        : ['Toilet', 'Mushola', 'Parkir'];
+
+      await destinationService.create({
         name: data.name,
-        description: data.shortDescription,
-        // long_description: data.fullDescription, // Backend might need adjustment to accept this or we map it
         location: `${data.city}, ${data.province}`,
-        price: data.price,
-        image_url: typeof data.mainImage === 'string' ? data.mainImage : 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0', // Dummy fallback
-        rating: 4.5, // Default
-        category: data.category,
-        status: data.status,
-        facilities: data.facilities,
-        operational_hours: data.operationalHours
-      };
-      
-      console.log('Submitting to backend:', destinationData);
-
-      // Insert data into Backend
-       const response = await fetch('http://localhost:5000/api/destinations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(destinationData),
+        city: data.city,
+        description: data.fullDescription || data.shortDescription,
+        image: imageUrl,
+        raw_price: Number(data.price) || 25000,
+        price: `Rp ${(Number(data.price) || 25000).toLocaleString('id-ID')}`,
+        category: data.category || 'Wisata Alam',
+        facilities: facilitiesList.length > 0 ? facilitiesList : ['Toilet', 'Area Parkir', 'Spot Foto'],
+        operational_hours: '08:00 - 17:00 WIB',
+        is_tasikmalaya: data.city.toLowerCase().includes('tasik') || data.province.toLowerCase().includes('tasik')
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save destination');
-      }
       
-      const destinationResponse = await response.json();
-      
-      // If we have tickets data, add them too (Mock for now, as backend needs endpoint)
-      if (data.tickets && data.tickets.length > 0 && destinationResponse.id) {
-        console.log('Skipping ticket creation - backend implementation pending');
-      }
-      
-      toast.success("Destinasi berhasil disimpan!");
-      // Wait a moment before redirecting to make sure the user sees the success toast
+      toast.success("Destinasi wisata berhasil ditambahkan dan disimpan!");
       setTimeout(() => {
         navigate('/admin/destinations');
-      }, 1500);
+      }, 800);
     } catch (error: any) {
       console.error('Error saving destination:', error);
       toast.error(error.message || 'Gagal menyimpan destinasi');

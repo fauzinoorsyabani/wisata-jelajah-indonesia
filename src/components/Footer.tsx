@@ -9,7 +9,16 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-white text-lg font-semibold mb-4">Wisata<span className="text-secondary">Jelajah</span></h3>
+            <div className="flex items-center gap-3 mb-4">
+              <img 
+                src="/logo.png" 
+                alt="Wisata Jelajah Indonesia Logo" 
+                className="h-10 w-10 object-contain rounded-xl bg-white/95 p-1 shadow" 
+              />
+              <span className="text-white text-xl font-extrabold tracking-tight">
+                Wisata<span className="text-emerald-400">Jelajah</span>
+              </span>
+            </div>
             <p className="mb-4 text-sm">
               Platform pemesanan tiket wisata online terpercaya di Indonesia. Nikmati kemudahan pemesanan dan cetak tiket digital maupun fisik.
             </p>

@@ -1,85 +1,119 @@
-
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import TasikmalayaSpotlight from "@/components/TasikmalayaSpotlight";
 import FeaturedDestinations from "@/components/FeaturedDestinations";
 import Footer from "@/components/Footer";
-import { Calendar, Ticket, MapPin, CreditCard } from "lucide-react";
+import OptimizedImage from "@/components/ui/OptimizedImage";
+import { Calendar, Ticket, MapPin, CreditCard, Sparkles, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
       <Navbar />
-      <HeroSection />
       
-      {/* Benefits Section */}
-      <section className="py-12 bg-white">
+      {/* 1. Hero Section with Galunggung & Waterpark Spotlight */}
+      <HeroSection />
+
+      {/* 2. Focused Section: Tasikmalaya Tourism & Ticket Booking */}
+      <TasikmalayaSpotlight />
+      
+      {/* 3. Benefits Section */}
+      <section className="py-16 bg-white border-y border-gray-100">
         <div className="container-custom">
-          <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-12">
-            Mengapa Memilih WisataJelajah?
-          </h2>
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
+              Keunggulan Kami
+            </span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mt-3">
+              Mengapa Memilih WisataJelajah?
+            </h2>
+            <p className="text-gray-600 mt-2 text-sm md:text-base">
+              Platform booking tiket wisata terlengkap dengan teknologi modern dan kenyamanan maksimal
+            </p>
+          </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="flex flex-col items-center text-center p-6 rounded-lg hover:shadow-md transition-shadow">
-              <div className="bg-blue-50 p-3 rounded-full mb-4">
-                <Calendar className="h-8 w-8 text-primary" />
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50/70 hover:bg-white hover:shadow-lg transition-all border border-slate-100">
+              <div className="bg-blue-100 p-3.5 rounded-2xl mb-4 text-primary">
+                <Calendar className="h-7 w-7" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Fleksibel</h3>
-              <p className="text-gray-600">Pilih tanggal kunjungan sesuai jadwalmu dengan mudah</p>
+              <h3 className="font-bold text-lg mb-2 text-gray-900">Jadwal Fleksibel</h3>
+              <p className="text-gray-600 text-sm">Pilih dan ubah tanggal kunjungan wisata sesuai rencanamu dengan mudah</p>
             </div>
             
-            <div className="flex flex-col items-center text-center p-6 rounded-lg hover:shadow-md transition-shadow">
-              <div className="bg-green-50 p-3 rounded-full mb-4">
-                <Ticket className="h-8 w-8 text-secondary" />
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50/70 hover:bg-white hover:shadow-lg transition-all border border-slate-100">
+              <div className="bg-emerald-100 p-3.5 rounded-2xl mb-4 text-emerald-600">
+                <Ticket className="h-7 w-7" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Tiket Digital</h3>
-              <p className="text-gray-600">Dapatkan dan cetak tiket langsung dari perangkatmu</p>
+              <h3 className="font-bold text-lg mb-2 text-gray-900">Tiket Digital Instan</h3>
+              <p className="text-gray-600 text-sm">Dapatkan e-tiket dengan QR Code yang langsung dapat di-scan di pintu masuk</p>
             </div>
             
-            <div className="flex flex-col items-center text-center p-6 rounded-lg hover:shadow-md transition-shadow">
-              <div className="bg-amber-50 p-3 rounded-full mb-4">
-                <MapPin className="h-8 w-8 text-accent" />
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50/70 hover:bg-white hover:shadow-lg transition-all border border-slate-100">
+              <div className="bg-amber-100 p-3.5 rounded-2xl mb-4 text-amber-600">
+                <MapPin className="h-7 w-7" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Beragam Destinasi</h3>
-              <p className="text-gray-600">Lebih dari 1000 destinasi wisata di seluruh Indonesia</p>
+              <h3 className="font-bold text-lg mb-2 text-gray-900">Wisata Tasik & Nasional</h3>
+              <p className="text-gray-600 text-sm">Fokus terlengkap wisata Tasikmalaya plus ribuan destinasi hits se-Indonesia</p>
             </div>
             
-            <div className="flex flex-col items-center text-center p-6 rounded-lg hover:shadow-md transition-shadow">
-              <div className="bg-red-50 p-3 rounded-full mb-4">
-                <CreditCard className="h-8 w-8 text-red-500" />
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50/70 hover:bg-white hover:shadow-lg transition-all border border-slate-100">
+              <div className="bg-rose-100 p-3.5 rounded-2xl mb-4 text-rose-600">
+                <CreditCard className="h-7 w-7" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Pembayaran Mudah</h3>
-              <p className="text-gray-600">Berbagai metode pembayaran yang aman dan terpercaya</p>
+              <h3 className="font-bold text-lg mb-2 text-gray-900">Pembayaran Praktis</h3>
+              <p className="text-gray-600 text-sm">Mendukung QRIS, Virtual Account, dompet digital, dan transfer bank cepat</p>
             </div>
           </div>
         </div>
       </section>
 
+      {/* 4. Featured Destinations Across Indonesia */}
       <FeaturedDestinations />
 
-      {/* Promo Section */}
-      <section className="py-12 bg-gradient-to-r from-primary to-blue-700 text-white">
-        <div className="container-custom">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-6 md:mb-0 md:max-w-xl">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Hemat 15% untuk Pemesanan Pertama!</h2>
-              <p className="mb-4 text-blue-100">
-                Daftar sekarang dan dapatkan diskon spesial 15% untuk pembelian tiket pertama Anda di WisataJelajah. 
-                Gunakan kode promo <strong className="bg-white text-primary px-2 py-0.5 rounded">JELAJAH15</strong>
+      {/* 5. Promo Section with Optimized WebP Image */}
+      <section className="py-16 bg-gradient-to-r from-blue-900 via-primary to-indigo-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
+        <div className="container-custom relative z-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="lg:max-w-xl text-center lg:text-left">
+              <div className="inline-flex items-center gap-1.5 bg-amber-400 text-gray-950 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+                <Sparkles className="w-3.5 h-3.5" />
+                PROMO SPESIAL LIBURAN
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold mb-4 tracking-tight">
+                Hemat 15% untuk Pemesanan Pertama!
+              </h2>
+              <p className="mb-6 text-blue-100 text-sm md:text-base leading-relaxed">
+                Daftar sekarang dan nikmati diskon 15% untuk pembelian tiket wisata Kawah Galunggung, TeeJay Waterpark, Borobudur, atau destinasi favorit Anda.
               </p>
-              <button 
-                className="bg-accent hover:bg-accent/90 text-white py-2 px-6 rounded-md font-medium"
-                onClick={() => window.location.href = '/promo'}
-              >
-                Dapatkan Promo
-              </button>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <span className="text-xs text-blue-200">Kode Promo:</span>
+                  <strong className="text-amber-300 font-mono text-base tracking-wider">JELAJAH15</strong>
+                </div>
+                <button 
+                  type="button"
+                  className="bg-amber-400 hover:bg-amber-300 text-gray-950 font-bold py-2.5 px-6 rounded-xl shadow-lg transition-transform active:scale-95 inline-flex items-center gap-2"
+                  onClick={() => navigate('/promo')}
+                >
+                  Klaim Promo
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             
-            <div className="w-full md:w-auto">
-              <img 
-                src="https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-                alt="Promo Wisata" 
-                className="rounded-lg shadow-lg max-w-xs mx-auto"
-              />
+            <div className="w-full max-w-sm">
+              <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20 transform hover:scale-102 transition-transform duration-300">
+                <OptimizedImage 
+                  src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&fm=webp&w=800&q=80" 
+                  alt="Promo Wisata Alam Galunggung Tasikmalaya" 
+                  className="h-64 md:h-72 w-full object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>

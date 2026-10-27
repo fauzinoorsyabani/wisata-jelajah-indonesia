@@ -21,9 +21,13 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['jspdf', 'html2canvas']
+    include: ['jspdf', 'html2canvas'],
+    esbuildOptions: {
+      target: 'es2022',
+    },
   },
   build: {
+    target: 'es2022',
     commonjsOptions: {
       include: [/jspdf/, /node_modules/],
     },

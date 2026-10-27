@@ -59,23 +59,33 @@ const SavedDestinations = () => {
       const dummyData: SavedDestination[] = [
         {
           id: 'saved-1',
-          destination_id: '1',
-          name: 'Raja Ampat',
-          location: 'Papua Barat',
-          image_url: 'https://images.unsplash.com/photo-1573790387438-4da905039392?auto=format&fit=crop&q=80',
+          destination_id: 'galunggung-tasik',
+          name: 'Gunung Galunggung & Pemandian Air Panas',
+          location: 'Tasikmalaya, Jawa Barat',
+          image_url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&fm=webp&w=800&q=80',
           rating: 4.8,
-          price: 5000000,
+          price: 15000,
           category: 'Wisata Alam'
         },
         {
           id: 'saved-2',
-          destination_id: '2',
+          destination_id: 'teejay-waterpark',
+          name: 'TeeJay Waterpark Plaza Asia',
+          location: 'Kota Tasikmalaya, Jawa Barat',
+          image_url: 'https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?auto=format&fit=crop&fm=webp&w=800&q=80',
+          rating: 4.7,
+          price: 30000,
+          category: 'Wisata Hiburan'
+        },
+        {
+          id: 'saved-3',
+          destination_id: 'candi-borobudur',
           name: 'Candi Borobudur',
           location: 'Magelang, Jawa Tengah',
-          image_url: 'https://images.unsplash.com/photo-1555899434-94d1368d7fe6?auto=format&fit=crop&q=80',
-          rating: 4.7,
-          price: 50000,
-          category: 'Budaya'
+          image_url: 'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&fm=webp&w=800&q=80',
+          rating: 4.9,
+          price: 85000,
+          category: 'Wisata Sejarah'
         }
       ];
       

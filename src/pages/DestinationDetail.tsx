@@ -5,30 +5,21 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-// import { supabase } from '@/integrations/supabase/client';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 import {
   MapPin,
   Calendar,
   Clock,
   Star,
-  Phone,
-  Mail,
-  DollarSign,
-  ChevronRight,
   Ticket,
   Loader2,
-  Users,
-  CalendarCheck,
-  Info,
-  CheckCircle
+  CheckCircle,
+  Share2,
+  Bookmark,
+  ShieldCheck,
+  Sparkles,
+  ArrowLeft
 } from 'lucide-react';
-
-import { 
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
 
 import { 
   Card, 
@@ -51,17 +42,15 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DestinationType, TicketType } from '@/types/destination';
-import TicketTab from '@/components/destination/TicketTab';
-import DestinationContent from '@/components/destination/DestinationContent';
+import { destinationService, Destination, TicketType } from '@/services/destinationService';
 
 const DestinationDetail = () => {
-  const { id, slug } = useParams<{ id?: string; slug?: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const { toast } = useToast();
   
-  const [destination, setDestination] = useState<DestinationType | null>(null);
+  const [destination, setDestination] = useState<Destination | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
@@ -71,11 +60,8 @@ const DestinationDetail = () => {
   const [visitorName, setVisitorName] = useState('');
   const [visitorEmail, setVisitorEmail] = useState('');
   const [visitorPhone, setVisitorPhone] = useState('');
-  const [specialRequests, setSpecialRequests] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Get tomorrow's date in YYYY-MM-DD format for default visit date
   function getTomorrowDate() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -83,242 +69,67 @@ const DestinationDetail = () => {
   }
 
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!isAuthenticated) {
-      toast({
-        title: "Login Diperlukan",
-        description: "Silakan login terlebih dahulu untuk melihat detail destinasi",
-        variant: "default"
-      });
-      navigate('/login', { state: { from: `/destinasi/${id || slug}` } });
-      return;
-    }
-
-    const identifier = id || slug;
-    if (!identifier) {
-      navigate('/destinasi');
-      return;
-    }
-
-    // Set visitor info from user data if available
-    // Set visitor info from user data if available
     if (user) {
       if (user.email) setVisitorEmail(user.email);
-      // Fallback name since we stripped full_name from register for simplicity
-      // if (user.name) setVisitorName(user.name); 
-      
-      // Check if user is admin
-      checkUserRole();
+      if (user.name) setVisitorName(user.name);
     }
+  }, [user]);
 
-    fetchDestinationData(identifier);
-  }, [id, slug, isAuthenticated, user, navigate, toast]);
-
-  // Check if the user is an admin
-  const checkUserRole = async () => {
-    if (user && user.role === 'admin') {
-      setIsAdmin(true);
-    }
-  };
-
-  const fetchDestinationData = async (identifier: string) => {
-    try {
-      setLoading(true);
-      console.log("Fetching destination with identifier:", identifier);
-
-      // Fetch from our new backend
-      const response = await fetch(`http://localhost:5000/api/destinations/${identifier}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch destination');
+  useEffect(() => {
+    const fetchDetail = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const data = await destinationService.getById(id);
+        if (data) {
+          setDestination(data);
+          const tickets: TicketType[] = data.ticket_types && data.ticket_types.length > 0 
+            ? data.ticket_types 
+            : [
+                {
+                  id: 'regular',
+                  name: 'Tiket Masuk Reguler',
+                  price: data.raw_price || 25000,
+                  description: 'Akses masuk standar untuk 1 orang'
+                }
+              ];
+          setTicketTypes(tickets);
+          setSelectedTicket(tickets[0]);
+        }
+      } catch (err) {
+        console.error('Error fetching detail', err);
+      } finally {
+        setLoading(false);
       }
-      
-      const data = await response.json();
+    };
 
-      if (data) {
-        console.log("Found destination:", data);
-        // Create a properly typed destination object with default values for missing fields
-        const typedDestination: DestinationType = {
-          id: data.id,
-          name: data.name,
-          location: data.location,
-          description: data.description,
-          amenities: 'Fasilitas lengkap tersedia', // Default value
-          address: data.location, // Use location as address fallback
-          operational_hours: '08:00 - 18:00',
-          best_time_to_visit: 'Sepanjang tahun', 
-          google_maps_url: '', 
-          image_url: data.image_url || '',
-          price: parseFloat(data.price) || 0,
-          category: 'Wisata',
-          rating: parseFloat(data.rating) || 0,
-          long_description: data.description,
-          full_location: data.location,
-          reviews_count: 0,
-          slug: data.name ? data.name.toLowerCase().replace(/\s+/g, '-') : '', 
-          created_at: data.created_at || '',
-          updated_at: data.created_at || ''
-        };
-        
-        setDestination(typedDestination);
-        
-        // Mock ticket types for now as backend doesn't support them yet
-        const typedTickets: TicketType[] = [{
-            id: 'ticket-1',
-            name: 'Tiket Masuk Reguler',
-            price: parseFloat(data.price) || 0,
-            description: 'Tiket masuk standar untuk satu orang',
-            capacity: 'Tidak terbatas',
-            validity_duration: '1',
-            destination_id: data.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        }];
-          
-        setTicketTypes(typedTickets);
-        setSelectedTicket(typedTickets[0]); 
+    fetchDetail();
+  }, [id]);
 
-        // Check if destination is saved (Local check only for now or stub)
-        // setIsSaved(false); // To implement later with backend
-      } else {
-         throw new Error("Data empty");
-      }
-    } catch (error) {
-      console.error("Error fetching destination details:", error);
-      // Fallback to dummy if backend fails or returns 404
-       const dummyData: DestinationType = {
-          id: identifier,
-          name: 'Pantai Kuta',
-          location: 'Bali',
-          image_url: 'https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8',
-          price: 50000,
-          description: 'Pantai Kuta adalah salah satu pantai terkenal di Bali dengan ombak yang cocok untuk berselancar, pemandangan sunset yang menakjubkan, dan berbagai aktivitas menarik.',
-          category: 'Pantai',
-          rating: 4.7,
-          operational_hours: '08:00 - 18:00 (Setiap Hari)',
-          amenities: 'Toilet, Tempat Parkir, Food Court, Penyewaan Papan Selancar',
-          address: 'Jalan Pantai Kuta, Kuta, Badung, Bali',
-          best_time_to_visit: 'Sepanjang tahun',
-          google_maps_url: '',
-          long_description: 'Pantai Kuta adalah salah satu pantai terkenal di Bali dengan ombak yang cocok untuk berselancar, pemandangan sunset yang menakjubkan, dan berbagai aktivitas menarik.',
-          full_location: 'Jalan Pantai Kuta, Kuta, Badung, Bali',
-          reviews_count: 150,
-          slug: 'pantai-kuta'
-        };
-        setDestination(dummyData);
-        setTicketTypes([]);
-        setSelectedTicket(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSaveDestination = async () => {
+  const handleBookTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!isAuthenticated) {
       toast({
         title: "Login Diperlukan",
-        description: "Silakan login terlebih dahulu untuk menyimpan destinasi",
-        variant: "default"
+        description: "Silakan login terlebih dahulu untuk memesan tiket wisata",
       });
-      navigate('/login', { state: { from: `/destinasi/${id || slug}` } });
+      navigate('/login', { state: { from: `/destinasi/${id}` } });
       return;
     }
 
-    try {
-      if (isSaved) {
-        // Delete from saved destinations
-        await supabase
-          .from('saved_destinations')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('destination_id', destination?.id);
-          
-        setIsSaved(false);
-        toast({
-          title: "Berhasil dihapus",
-          description: `${destination?.name} telah dihapus dari destinasi tersimpan`,
-        });
-      } else {
-        // Add to saved destinations
-        await supabase
-          .from('saved_destinations')
-          .insert({
-            user_id: user.id,
-            destination_id: destination?.id
-          });
-          
-        setIsSaved(true);
-        toast({
-          title: "Berhasil disimpan",
-          description: `${destination?.name} telah ditambahkan ke destinasi tersimpan`,
-        });
-      }
-    } catch (error) {
-      console.error("Error toggling saved destination:", error);
+    if (!selectedTicket || !destination) {
       toast({
-        title: "Error",
-        description: "Gagal menyimpan/menghapus destinasi",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleTicketSelect = (ticket: TicketType) => {
-    setSelectedTicket(ticket);
-  };
-
-  const incrementQuantity = () => {
-    setQuantity(prevQuantity => prevQuantity + 1);
-  };
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prevQuantity => prevQuantity - 1);
-    }
-  };
-
-  const handleBookTicket = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Login Diperlukan",
-        description: "Silakan login terlebih dahulu untuk memesan tiket",
-        variant: "default"
-      });
-      navigate('/login', { state: { from: `/destinasi/${id || slug}` } });
-      return;
-    }
-
-    if (isAdmin) {
-      toast({
-        title: "Tidak Diizinkan",
-        description: "Admin tidak dapat membeli tiket",
+        title: "Tiket belum dipilih",
+        description: "Silakan pilih jenis tiket yang diinginkan",
         variant: "destructive"
       });
       return;
     }
 
-    if (!selectedTicket) {
+    if (!visitorName.trim()) {
       toast({
-        title: "Tiket tidak dipilih",
-        description: "Silakan pilih jenis tiket terlebih dahulu",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!visitDate) {
-      toast({
-        title: "Tanggal kunjungan tidak dipilih",
-        description: "Silakan pilih tanggal kunjungan",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!visitorName || !visitorEmail) {
-      toast({
-        title: "Data tidak lengkap",
-        description: "Nama dan email pengunjung wajib diisi",
+        title: "Nama Pengunjung Kosong",
+        description: "Silakan isi nama lengkap pengunjung",
         variant: "destructive"
       });
       return;
@@ -327,55 +138,34 @@ const DestinationDetail = () => {
     setIsSubmitting(true);
 
     try {
-      if (!destination || !destination.id) {
-        throw new Error("Data destinasi tidak valid");
-      }
-      
-      console.log('Starting checkout process with:', {
-        ticketId: selectedTicket.id,
-        destinationId: destination.id,
+      const totalAmount = selectedTicket.price * quantity;
+      const newBooking = destinationService.createBooking({
+        user_id: user?.id || 'demo_user',
+        user_name: visitorName,
+        user_email: visitorEmail || user?.email || 'wisatawan@wisata.id',
+        destination_id: destination.id,
+        destination_name: destination.name,
+        destination_location: destination.location,
+        destination_image: destination.image,
+        ticket_type: selectedTicket.name,
+        ticket_date: visitDate,
         quantity,
-        visitorName,
-        visitorEmail,
-        visitorPhone,
-        visitDate,
-        specialRequests,
-        selectedTicketPrice: selectedTicket.price
-      });
-      
-      // Call Stripe checkout function
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          ticketId: selectedTicket.id,
-          destinationId: destination.id,
-          quantity,
-          visitorName,
-          visitorEmail,
-          visitorPhone,
-          visitDate,
-          specialRequests
-        }
+        unit_price: selectedTicket.price,
+        total_amount: totalAmount,
+        status: 'paid', // Immediately confirmed digital ticket
+        payment_method: 'QRIS Instan'
       });
 
-      if (error) {
-        console.error('Stripe checkout error:', error);
-        throw error;
-      }
-
-      if (!data || !data.url) {
-        throw new Error('No checkout URL returned from server');
-      }
-
-      console.log('Redirecting to Stripe checkout:', data.url);
-      
-      // Redirect to Stripe checkout in the same window
-      window.location.href = data.url;
-      
-    } catch (error) {
-      console.error('Payment error:', error);
       toast({
-        title: "Gagal Memproses Pembayaran",
-        description: "Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.",
+        title: "Pemesanan Tiket Berhasil!",
+        description: `E-Tiket dengan Kode ${newBooking.booking_code} telah diterbitkan. Siap digunakan!`,
+      });
+
+      navigate('/bookings');
+    } catch (err) {
+      toast({
+        title: "Gagal Memproses Pemesanan",
+        description: "Terjadi kesalahan, silakan coba lagi.",
         variant: "destructive"
       });
     } finally {
@@ -383,13 +173,21 @@ const DestinationDetail = () => {
     }
   };
 
+  const handleSaveToggle = () => {
+    setIsSaved(!isSaved);
+    toast({
+      title: isSaved ? "Dihapus dari Tersimpan" : "Disimpan ke Favorit",
+      description: `${destination?.name} ${isSaved ? 'telah dihapus' : 'berhasil ditambahkan'}.`,
+    });
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
-        <div className="flex-grow flex flex-col items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-gray-600">Memuat detail destinasi...</p>
+        <div className="flex-1 flex flex-col items-center justify-center py-24">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <p className="text-gray-600 font-medium">Memuat detail destinasi...</p>
         </div>
         <Footer />
       </div>
@@ -398,230 +196,329 @@ const DestinationDetail = () => {
 
   if (!destination) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
-        <div className="container-custom py-8 flex-grow">
-          <div className="text-center py-12">
-            <h3 className="text-xl font-medium text-gray-700 mb-2">Destinasi tidak ditemukan</h3>
-            <p className="text-gray-500 mb-6">Destinasi yang Anda cari tidak ditemukan</p>
-            <Button onClick={() => navigate('/destinasi')}>
-              Jelajahi Destinasi Lain
-            </Button>
-          </div>
+        <div className="container-custom py-16 flex-1 text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Destinasi Tidak Ditemukan</h2>
+          <p className="text-gray-600 mb-6">Destinasi yang Anda cari mungkin telah dipindahkan atau dihapus.</p>
+          <Button onClick={() => navigate('/destinasi')} className="bg-primary text-white">
+            Kembali ke Katalog Destinasi
+          </Button>
         </div>
         <Footer />
       </div>
     );
   }
 
-  // Calculate total price
-  const totalPrice = selectedTicket ? selectedTicket.price * quantity : 0;
-  const formattedTotalPrice = totalPrice.toLocaleString('id-ID');
+  const totalPrice = selectedTicket ? selectedTicket.price * quantity : destination.raw_price * quantity;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
       <Navbar />
 
-      <div className="container-custom py-8 flex-grow">
+      {/* Breadcrumb & Navigation */}
+      <div className="bg-white border-b border-gray-200 py-3">
+        <div className="container-custom flex items-center justify-between text-xs md:text-sm text-gray-600">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center gap-1.5 hover:text-primary font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Kembali
+          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleSaveToggle}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                isSaved ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-gray-50 border-gray-200 text-gray-600 hover:text-rose-600'
+              }`}
+            >
+              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-rose-600' : ''}`} />
+            </button>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast({ title: "Tautan Disalin", description: "Link destinasi berhasil disalin ke clipboard" });
+              }}
+              className="p-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 hover:text-primary"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container-custom py-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Destination Details */}
-          <div className="lg:col-span-2">
-            <DestinationContent 
-              destination={destination}
-              ticketTypes={ticketTypes}
-              isSaved={isSaved}
-              setIsSaved={setIsSaved}
-              userId={user?.id}
-              isAuthenticated={isAuthenticated}
-              isAdmin={isAdmin}
-            />
+          {/* Left Column: Media & Info */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Main Image Banner with WebP */}
+            <div className="relative h-80 sm:h-96 md:h-[420px] rounded-2xl overflow-hidden shadow-md">
+              <OptimizedImage
+                src={destination.image}
+                alt={destination.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                <span className="bg-primary/95 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow">
+                  {destination.category}
+                </span>
+                {destination.is_tasikmalaya && (
+                  <span className="bg-amber-500/95 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Destinasi Tasikmalaya
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Title & Metadata */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div className="flex items-center text-sm text-gray-500 font-medium">
+                  <MapPin className="w-4 h-4 mr-1 text-primary shrink-0" />
+                  <span>{destination.location}</span>
+                </div>
+                <div className="flex items-center gap-1 bg-amber-50 text-amber-800 px-3 py-1 rounded-full text-xs font-bold">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  <span>{destination.rating}</span>
+                  <span className="text-gray-400 font-normal">({destination.reviews_count} ulasan)</span>
+                </div>
+              </div>
+
+              <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-4">
+                {destination.name}
+              </h1>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-y border-gray-100 text-sm">
+                <div className="flex items-center gap-2 text-gray-700">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <div>
+                    <span className="text-xs text-gray-400 block">Jam Operasional</span>
+                    <span className="font-semibold">{destination.operational_hours}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <div>
+                    <span className="text-xs text-gray-400 block">Tiket Digital Resmi</span>
+                    <span className="font-semibold">Konfirmasi Langsung & QR Code</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mt-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-2">Tentang Destinasi</h2>
+                <p className="text-gray-600 leading-relaxed text-sm md:text-base whitespace-pre-line">
+                  {destination.description}
+                </p>
+              </div>
+
+              {/* Facilities */}
+              {destination.facilities && destination.facilities.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">Fasilitas yang Tersedia</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {destination.facilities.map((fac, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs md:text-sm text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>{fac}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Right Column - Booking Form */}
+          {/* Right Column: Ticket Booking Form */}
           <div className="lg:col-span-1">
-            {!isAdmin ? (
-              <Card className="sticky top-24" id="booking-form">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xl">Pesan Tiket</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="ticket-type">Pilih Jenis Tiket</Label>
-                      <Select 
-                        value={selectedTicket?.id}
-                        onValueChange={(value) => {
-                          const ticket = ticketTypes.find(t => t.id === value);
-                          if (ticket) setSelectedTicket(ticket);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih Tiket" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Jenis Tiket</SelectLabel>
-                            {ticketTypes.length > 0 ? (
-                              ticketTypes.map((ticket) => (
-                                <SelectItem key={ticket.id} value={ticket.id}>
-                                  {ticket.name} - Rp {ticket.price.toLocaleString('id-ID')}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no-tickets" disabled>
-                                Tiket belum tersedia
-                              </SelectItem>
-                            )}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <Card className="sticky top-24 shadow-lg border-gray-200 rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-primary to-blue-700 text-white p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-blue-200 uppercase tracking-wider font-semibold">Pesan Tiket Online</span>
+                    <CardTitle className="text-xl font-bold mt-1">Formulir Tiket</CardTitle>
+                  </div>
+                  <Ticket className="w-8 h-8 text-amber-300 opacity-90" />
+                </div>
+              </CardHeader>
 
-                    <div>
-                      <Label htmlFor="quantity">Jumlah Tiket</Label>
-                      <div className="flex items-center mt-1">
-                        <button 
-                          type="button" 
-                          onClick={() => decrementQuantity()}
-                          className="bg-gray-200 px-3 py-2 rounded-l"
+              <form onSubmit={handleBookTicket}>
+                <CardContent className="p-6 space-y-5">
+                  {/* Ticket Type Selection */}
+                  <div>
+                    <Label htmlFor="ticketType" className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 block">
+                      Pilihan Jenis Tiket
+                    </Label>
+                    <Select
+                      value={selectedTicket?.id}
+                      onValueChange={(val) => {
+                        const found = ticketTypes.find(t => t.id === val);
+                        if (found) setSelectedTicket(found);
+                      }}
+                    >
+                      <SelectTrigger className="w-full text-xs md:text-sm py-2.5">
+                        <SelectValue placeholder="Pilih Jenis Tiket" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Pilihan Tiket</SelectLabel>
+                          {ticketTypes.map(t => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name} (Rp {t.price.toLocaleString('id-ID')})
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    {selectedTicket?.description && (
+                      <p className="text-[11px] text-gray-500 mt-1.5 italic">
+                        {selectedTicket.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Visit Date */}
+                  <div>
+                    <Label htmlFor="visitDate" className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 block">
+                      Tanggal Kunjungan
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="visitDate"
+                        type="date"
+                        min={getTomorrowDate()}
+                        value={visitDate}
+                        onChange={(e) => setVisitDate(e.target.value)}
+                        required
+                        className="text-xs md:text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quantity */}
+                  <div>
+                    <Label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 block">
+                      Jumlah Tiket
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                          className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition-colors"
                           disabled={quantity <= 1}
                         >
                           -
                         </button>
-                        <input 
-                          id="quantity"
-                          type="number" 
-                          min="1" 
-                          value={quantity} 
-                          onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                          className="w-20 text-center border-y py-2"
-                          readOnly
-                        />
-                        <button 
-                          type="button" 
-                          onClick={() => incrementQuantity()}
-                          className="bg-gray-200 px-3 py-2 rounded-r"
+                        <span className="w-12 text-center text-sm font-bold text-gray-900">
+                          {quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(quantity + 1)}
+                          className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition-colors"
                         >
                           +
                         </button>
                       </div>
+                      <span className="text-xs text-gray-500">orang / tiket</span>
                     </div>
+                  </div>
 
+                  <Separator />
+
+                  {/* Visitor Info */}
+                  <div className="space-y-3">
                     <div>
-                      <Label htmlFor="visit-date">Tanggal Kunjungan</Label>
-                      <Input 
-                        id="visit-date"
-                        type="date" 
-                        className="mt-1"
-                        value={visitDate}
-                        onChange={(e) => setVisitDate(e.target.value)}
-                        min={getTomorrowDate()}
+                      <Label htmlFor="visitorName" className="text-xs font-semibold text-gray-700 block mb-1">
+                        Nama Lengkap Pemesan *
+                      </Label>
+                      <Input
+                        id="visitorName"
+                        placeholder="Contoh: Ahmad Fauzi"
+                        value={visitorName}
+                        onChange={(e) => setVisitorName(e.target.value)}
+                        required
+                        className="text-xs md:text-sm"
                       />
                     </div>
 
-                    <Separator className="my-4" />
-
                     <div>
-                      <h3 className="font-medium mb-3">Data Pengunjung</h3>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="visitor-name">Nama Lengkap</Label>
-                          <Input
-                            id="visitor-name"
-                            placeholder="Masukkan nama lengkap"
-                            value={visitorName}
-                            onChange={(e) => setVisitorName(e.target.value)}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="visitor-email">Email</Label>
-                          <Input
-                            id="visitor-email"
-                            type="email"
-                            placeholder="Masukkan email"
-                            value={visitorEmail}
-                            onChange={(e) => setVisitorEmail(e.target.value)}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="visitor-phone">No. Telepon</Label>
-                          <Input
-                            id="visitor-phone"
-                            placeholder="Masukkan nomor telepon"
-                            value={visitorPhone}
-                            onChange={(e) => setVisitorPhone(e.target.value)}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="special-requests">Permintaan Khusus (Opsional)</Label>
-                          <Input
-                            id="special-requests"
-                            placeholder="Masukkan permintaan khusus jika ada"
-                            value={specialRequests}
-                            onChange={(e) => setSpecialRequests(e.target.value)}
-                          />
-                        </div>
-                      </div>
+                      <Label htmlFor="visitorEmail" className="text-xs font-semibold text-gray-700 block mb-1">
+                        Email Konfirmasi *
+                      </Label>
+                      <Input
+                        id="visitorEmail"
+                        type="email"
+                        placeholder="email@example.com"
+                        value={visitorEmail}
+                        onChange={(e) => setVisitorEmail(e.target.value)}
+                        required
+                        className="text-xs md:text-sm"
+                      />
                     </div>
 
-                    <Separator className="my-4" />
-
                     <div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Harga tiket</span>
-                        <span>Rp {selectedTicket ? selectedTicket.price.toLocaleString('id-ID') : '0'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Jumlah</span>
-                        <span>{quantity} tiket</span>
-                      </div>
-                      <Separator className="my-2" />
-                      <div className="flex justify-between items-center font-medium text-lg">
-                        <span>Total</span>
-                        <span className="text-primary">Rp {formattedTotalPrice}</span>
-                      </div>
+                      <Label htmlFor="visitorPhone" className="text-xs font-semibold text-gray-700 block mb-1">
+                        Nomor WhatsApp / HP
+                      </Label>
+                      <Input
+                        id="visitorPhone"
+                        placeholder="08123456789"
+                        value={visitorPhone}
+                        onChange={(e) => setVisitorPhone(e.target.value)}
+                        className="text-xs md:text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Price Calculation */}
+                  <div className="bg-gray-50 p-4 rounded-xl space-y-2 text-xs">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Harga Tiket:</span>
+                      <span>Rp {(selectedTicket?.price || 0).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Jumlah Pengunjung:</span>
+                      <span>{quantity}x</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Biaya Layanan & Cetak QR:</span>
+                      <span className="text-emerald-600 font-medium">Gratis</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-sm font-bold text-gray-900 pt-1">
+                      <span>Total Pembayaran:</span>
+                      <span className="text-primary text-base">
+                        Rp {totalPrice.toLocaleString('id-ID')}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full flex items-center gap-2" 
-                    onClick={handleBookTicket}
-                    disabled={!selectedTicket || isSubmitting || ticketTypes.length === 0}
+
+                <CardFooter className="p-6 pt-0">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95"
                   >
                     {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Memproses...</span>
-                      </>
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Menerbitkan Tiket...
+                      </span>
                     ) : (
-                      <>
-                        <DollarSign className="h-4 w-4" />
-                        <span>Pesan & Bayar Sekarang</span>
-                      </>
+                      <span>Pesan & Dapatkan E-Tiket Instan</span>
                     )}
                   </Button>
                 </CardFooter>
-              </Card>
-            ) : (
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Akun Admin</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">Anda masuk sebagai admin. Akses panel admin untuk mengelola destinasi dan sistem.</p>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" onClick={() => navigate('/admin')}>
-                    Ke Dashboard Admin
-                  </Button>
-                </CardFooter>
-              </Card>
-            )}
+              </form>
+            </Card>
           </div>
         </div>
       </div>
