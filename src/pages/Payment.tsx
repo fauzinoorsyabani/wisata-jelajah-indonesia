@@ -25,7 +25,8 @@ import {
   Banknote,
   QrCode,
   ShieldCheck,
-  Building2
+  Building2,
+  CreditCard
 } from 'lucide-react';
 
 const Payment = () => {
@@ -38,6 +39,7 @@ const Payment = () => {
   const [loading, setLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSwitchingCod, setIsSwitchingCod] = useState(false);
+  const [isSnapLoading, setIsSnapLoading] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes timer
 
@@ -58,6 +60,23 @@ const Payment = () => {
     }
     setLoading(false);
   }, [id, isAuthenticated, navigate]);
+
+  // Load Midtrans Snap SDK dynamically
+  useEffect(() => {
+    const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'Mid-client-LOIr8e9uX7jFB7Ck';
+    const isProd = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION !== 'false';
+    const snapUrl = isProd
+      ? 'https://app.midtrans.com/snap/snap.js'
+      : 'https://app.sandbox.midtrans.com/snap/snap.js';
+
+    if (!document.querySelector(`script[src="${snapUrl}"]`)) {
+      const script = document.createElement('script');
+      script.src = snapUrl;
+      script.setAttribute('data-client-key', clientKey);
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   // Countdown timer effect
   useEffect(() => {
@@ -126,6 +145,79 @@ const Payment = () => {
 
       navigate('/bookings');
     }, 800);
+  };
+
+  const handleOpenSnapModal = async () => {
+    if (!booking) return;
+    setIsSnapLoading(true);
+
+    try {
+      const response = await fetch('/api/payment/snap-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          destinationName: booking.destination_name,
+          ticketType: booking.ticket_type,
+          quantity: booking.quantity,
+          amount: booking.total_amount,
+          customerName: booking.user_name,
+          customerEmail: booking.user_email
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.token && (window as any).snap) {
+        (window as any).snap.pay(data.token, {
+          onSuccess: (result: any) => {
+            destinationService.updateBookingStatus(booking.id, 'paid', 'Midtrans Snap (Lunas)');
+            toast({
+              title: "Pembayaran Berhasil!",
+              description: `Transaksi telah diverifikasi Midtrans. E-Tiket Anda telah aktif!`,
+            });
+            navigate('/bookings');
+          },
+          onPending: (result: any) => {
+            toast({
+              title: "Menunggu Pembayaran",
+              description: "Silakan selesaikan pembayaran sesuai instruksi Midtrans.",
+            });
+            navigate('/bookings');
+          },
+          onError: (err: any) => {
+            toast({
+              title: "Pembayaran Dibatalkan / Gagal",
+              description: "Anda dapat mencoba kembali atau membayar via QRIS langsung.",
+              variant: "destructive"
+            });
+          },
+          onClose: () => {
+            toast({
+              title: "Popup Ditutup",
+              description: "Anda dapat melanjutkan pembayaran kapan saja.",
+            });
+          }
+        });
+      } else {
+        if (data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          toast({
+            title: "Info Midtrans Snap",
+            description: data.message || "Gunakan QR Code dinamis di bawah untuk menyelesaikan transaksi.",
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Snap payment error:', err);
+      toast({
+        title: "Info Gateway",
+        description: "Silakan scan kode QRIS langsung di bawah.",
+      });
+    } finally {
+      setIsSnapLoading(false);
+    }
   };
 
   if (loading) {
@@ -309,9 +401,28 @@ const Payment = () => {
                 {/* Verification Actions */}
                 <div className="pt-4 space-y-3">
                   <Button
+                    onClick={handleOpenSnapModal}
+                    disabled={isSnapLoading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    {isSnapLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Menghubungkan Midtrans Snap...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-4 h-4" />
+                        <span>Bayar dengan Midtrans (Virtual Account / GoPay)</span>
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
                     onClick={handleVerifyPayment}
                     disabled={isVerifying}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                    variant="outline"
+                    className="w-full border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
                   >
                     {isVerifying ? (
                       <>
@@ -321,7 +432,7 @@ const Payment = () => {
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Saya Sudah Bayar (Cek Status Otomatis)</span>
+                        <span>Saya Sudah Scan QRIS (Cek Status Otomatis)</span>
                       </>
                     )}
                   </Button>

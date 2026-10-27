@@ -5,6 +5,7 @@ import mysql from 'mysql2/promise';
 import authRoutes from './routes/auth.js';
 import destinationRoutes from './routes/destinations.js';
 import dashboardRoutes from './routes/dashboard.js';
+import paymentRoutes from './routes/payment.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationRoutes);
 app.use('/api/admin', dashboardRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Database connection
 const pool = mysql.createPool({
