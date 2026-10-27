@@ -456,9 +456,9 @@ class DestinationService {
       // Fallback to local
     }
 
-    // 2. Attempt local backend sync if running
+    // 2. Attempt backend sync (Vercel rewrite routes /api to Express server)
     try {
-      const response = await fetch('http://localhost:5000/api/destinations', {
+      const response = await fetch('/api/destinations', {
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(1500)
       });
@@ -529,7 +529,7 @@ class DestinationService {
 
     // Try syncing to backend
     try {
-      fetch('http://localhost:5000/api/destinations', {
+      fetch('/api/destinations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -47,7 +47,7 @@ export const useDestinationDetail = (id: string | undefined) => {
       let destinationData = null;
       
       try {
-        const response = await fetch(`http://localhost:5000/api/destinations/${id}`);
+        const response = await fetch(`/api/destinations/${id}`);
         if (response.ok) {
            const data = await response.json();
            // Adjust data structure if necessary to match DestinationType

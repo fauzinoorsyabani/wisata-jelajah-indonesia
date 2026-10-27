@@ -50,7 +50,7 @@ const Booking = () => {
       setLoading(true);
       
       // Fetch destination data from backend
-      const response = await fetch(`http://localhost:5000/api/destinations/${id}`);
+      const response = await fetch(`/api/destinations/${id}`);
       if (!response.ok) throw new Error('Failed to fetch destination');
       const destinationData = await response.json();
       
