@@ -18,7 +18,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   
-  const { user, isAuthenticated, isSuperAdmin, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const accountButtonRef = useRef<HTMLButtonElement>(null);
@@ -161,24 +161,6 @@ const Navbar = () => {
                   >
                     Destinasi Tersimpan
                   </Link>
-                  {isSuperAdmin && (
-                    <Link 
-                      to="/super-admin" 
-                      className="block px-4 py-2 text-sm text-amber-700 font-bold hover:bg-amber-50"
-                      onClick={() => setShowAccountMenu(false)}
-                    >
-                      👑 Super Admin Master
-                    </Link>
-                  )}
-                  {isAdmin && (
-                    <Link 
-                      to="/admin" 
-                      className="block px-4 py-2 text-sm text-blue-700 font-semibold hover:bg-blue-50"
-                      onClick={() => setShowAccountMenu(false)}
-                    >
-                      🛡️ Admin Pengelola
-                    </Link>
-                  )}
                   <div className="border-t border-gray-100 my-1"></div>
                   <button 
                     onClick={handleLogout}
@@ -248,22 +230,7 @@ const Navbar = () => {
                   <Link to="/saved-destinations" className="block py-2 font-medium text-gray-700 hover:text-primary" onClick={toggleMenu}>
                     Destinasi Tersimpan
                   </Link>
-                  {isSuperAdmin && (
-                    <Link to="/super-admin" className="block py-2 font-bold text-amber-700 bg-amber-50 rounded px-2" onClick={toggleMenu}>
-                      <div className="flex items-center">
-                        <Settings className="h-4 w-4 mr-2 text-amber-600" />
-                        👑 Super Admin Master
-                      </div>
-                    </Link>
-                  )}
-                  {isAdmin && (
-                    <Link to="/admin" className="block py-2 font-medium text-blue-700 bg-blue-50 rounded px-2" onClick={toggleMenu}>
-                      <div className="flex items-center">
-                        <Settings className="h-4 w-4 mr-2 text-blue-600" />
-                        🛡️ Admin Pengelola
-                      </div>
-                    </Link>
-                  )}
+
                   <button 
                     onClick={handleLogout}
                     className="block w-full text-left py-2 font-medium text-gray-700 hover:text-primary"
