@@ -45,7 +45,7 @@ export interface Booking {
   quantity: number;
   unit_price: number;
   total_amount: number;
-  status: 'pending' | 'paid' | 'cancelled';
+  status: 'pending' | 'paid' | 'cancelled' | 'used';
   payment_method: string;
   created_at: string;
 }
@@ -646,15 +646,23 @@ class DestinationService {
     return newBooking;
   }
 
-  updateBookingStatus(id: string, status: 'pending' | 'paid' | 'used' | 'cancelled'): boolean {
+  getBookingById(id: string): Booking | undefined {
     const all = this.getBookings();
-    const index = all.findIndex(b => b.id === id);
+    return all.find(b => b.id === id || b.booking_code === id);
+  }
+
+  updateBookingStatus(id: string, status: 'pending' | 'paid' | 'used' | 'cancelled', paymentMethod?: string): boolean {
+    const all = this.getBookings();
+    const index = all.findIndex(b => b.id === id || b.booking_code === id);
     if (index === -1) return false;
     all[index].status = status;
+    if (paymentMethod) {
+      all[index].payment_method = paymentMethod;
+    }
     this.saveBookings(all);
 
     // Sync to TiDB Cloud in background
-    tidbService.updateBookingStatus(id, status).catch(() => {});
+    tidbService.updateBookingStatus(all[index].id, status).catch(() => {});
 
     return true;
   }

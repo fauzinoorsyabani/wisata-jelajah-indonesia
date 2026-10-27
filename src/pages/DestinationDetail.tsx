@@ -18,7 +18,9 @@ import {
   Bookmark,
   ShieldCheck,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  QrCode,
+  Banknote
 } from 'lucide-react';
 
 import { 
@@ -60,6 +62,7 @@ const DestinationDetail = () => {
   const [visitorName, setVisitorName] = useState('');
   const [visitorEmail, setVisitorEmail] = useState('');
   const [visitorPhone, setVisitorPhone] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'cod'>('qris');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function getTomorrowDate() {
@@ -139,29 +142,56 @@ const DestinationDetail = () => {
 
     try {
       const totalAmount = selectedTicket.price * quantity;
-      const newBooking = destinationService.createBooking({
-        user_id: user?.id || 'demo_user',
-        user_name: visitorName,
-        user_email: visitorEmail || user?.email || 'wisatawan@wisata.id',
-        destination_id: destination.id,
-        destination_name: destination.name,
-        destination_location: destination.location,
-        destination_image: destination.image,
-        ticket_type: selectedTicket.name,
-        ticket_date: visitDate,
-        quantity,
-        unit_price: selectedTicket.price,
-        total_amount: totalAmount,
-        status: 'paid', // Immediately confirmed digital ticket
-        payment_method: 'QRIS Instan'
-      });
 
-      toast({
-        title: "Pemesanan Tiket Berhasil!",
-        description: `E-Tiket dengan Kode ${newBooking.booking_code} telah diterbitkan. Siap digunakan!`,
-      });
+      if (paymentMethod === 'qris') {
+        const newBooking = destinationService.createBooking({
+          user_id: user?.id || 'demo_user',
+          user_name: visitorName,
+          user_email: visitorEmail || user?.email || 'wisatawan@wisata.id',
+          destination_id: destination.id,
+          destination_name: destination.name,
+          destination_location: destination.location,
+          destination_image: destination.image,
+          ticket_type: selectedTicket.name,
+          ticket_date: visitDate,
+          quantity,
+          unit_price: selectedTicket.price,
+          total_amount: totalAmount,
+          status: 'pending', // Pending payment
+          payment_method: 'QRIS'
+        });
 
-      navigate('/bookings');
+        toast({
+          title: "Pesanan Dibuat!",
+          description: `Silakan scan QRIS untuk menyelesaikan pembayaran Rp ${totalAmount.toLocaleString('id-ID')}.`,
+        });
+
+        navigate(`/payment/${newBooking.id}`);
+      } else {
+        const newBooking = destinationService.createBooking({
+          user_id: user?.id || 'demo_user',
+          user_name: visitorName,
+          user_email: visitorEmail || user?.email || 'wisatawan@wisata.id',
+          destination_id: destination.id,
+          destination_name: destination.name,
+          destination_location: destination.location,
+          destination_image: destination.image,
+          ticket_type: selectedTicket.name,
+          ticket_date: visitDate,
+          quantity,
+          unit_price: selectedTicket.price,
+          total_amount: totalAmount,
+          status: 'pending', // Pending payment at ticket counter
+          payment_method: 'Bayar di Tempat (Loket)'
+        });
+
+        toast({
+          title: "Pesanan Berhasil Dicatat!",
+          description: `Kode Booking ${newBooking.booking_code}. Anda dapat membayar di loket saat berkunjung.`,
+        });
+
+        navigate('/bookings');
+      }
     } catch (err) {
       toast({
         title: "Gagal Memproses Pemesanan",
@@ -477,6 +507,60 @@ const DestinationDetail = () => {
 
                   <Separator />
 
+                  {/* Payment Method Selector */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-gray-700 block">
+                      Pilihan Metode Pembayaran *
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div 
+                        onClick={() => setPaymentMethod('qris')}
+                        className={`cursor-pointer rounded-xl border p-3 flex flex-col justify-between transition-all ${
+                          paymentMethod === 'qris' 
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900">
+                            <QrCode className="w-4 h-4 text-primary" />
+                            <span>QRIS Instan</span>
+                          </div>
+                          <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                            E-Wallet & Bank
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-tight">
+                          GoPay, OVO, DANA, BCA, Mandiri & ShopeePay
+                        </p>
+                      </div>
+
+                      <div 
+                        onClick={() => setPaymentMethod('cod')}
+                        className={`cursor-pointer rounded-xl border p-3 flex flex-col justify-between transition-all ${
+                          paymentMethod === 'cod' 
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900">
+                            <Banknote className="w-4 h-4 text-emerald-600" />
+                            <span>Bayar di Loket</span>
+                          </div>
+                          <span className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
+                            COD / Lokasi
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-tight">
+                          Bayar tunai/QRIS langsung di loket wisata
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   {/* Price Calculation */}
                   <div className="bg-gray-50 p-4 rounded-xl space-y-2 text-xs">
                     <div className="flex justify-between text-gray-600">
@@ -488,8 +572,14 @@ const DestinationDetail = () => {
                       <span>{quantity}x</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Biaya Layanan & Cetak QR:</span>
-                      <span className="text-emerald-600 font-medium">Gratis</span>
+                      <span>Metode:</span>
+                      <span className="font-semibold text-gray-800">
+                        {paymentMethod === 'qris' ? 'QRIS Digital Instan' : 'Bayar di Loket Masuk'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Biaya Layanan:</span>
+                      <span className="text-emerald-600 font-medium">Gratis (Rp 0)</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-sm font-bold text-gray-900 pt-1">
@@ -510,10 +600,14 @@ const DestinationDetail = () => {
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Menerbitkan Tiket...
+                        Memproses Pesanan...
                       </span>
                     ) : (
-                      <span>Pesan & Dapatkan E-Tiket Instan</span>
+                      <span>
+                        {paymentMethod === 'qris' 
+                          ? 'Lanjut ke Pembayaran QRIS →' 
+                          : 'Konfirmasi Pesanan (Bayar di Loket) →'}
+                      </span>
                     )}
                   </Button>
                 </CardFooter>

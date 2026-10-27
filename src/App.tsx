@@ -13,6 +13,7 @@ import AdminLogin from './pages/auth/AdminLogin';
 import CustomerDashboard from './pages/CustomerDashboard';
 import Destinations from './pages/Destinations';
 import DestinationDetail from './pages/DestinationDetail';
+import Payment from './pages/Payment';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 import Bookings from './pages/Bookings';
@@ -67,6 +68,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['customer', 'admin', 'super_admin']}>
                 <Bookings />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="payment/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['customer', 'admin', 'super_admin']}>
+                <Payment />
               </ProtectedRoute>
             } 
           />

@@ -18,7 +18,9 @@ import {
   ArrowRight,
   Download,
   MapPin,
-  Sparkles
+  Sparkles,
+  Building2,
+  QrCode
 } from 'lucide-react';
 import {
   Select,
@@ -54,7 +56,7 @@ const Bookings = () => {
     setExpandedBookingId(prev => (prev === id ? null : id));
   };
 
-  const getStatusBadge = (status: Booking['status']) => {
+  const getStatusBadge = (status: Booking['status'], paymentMethod?: string) => {
     if (status === 'paid') {
       return (
         <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold flex items-center gap-1">
@@ -64,10 +66,18 @@ const Bookings = () => {
       );
     }
     if (status === 'pending') {
+      if (paymentMethod?.toLowerCase().includes('loket') || paymentMethod?.toLowerCase().includes('tempat')) {
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-semibold flex items-center gap-1">
+            <Building2 className="w-3.5 h-3.5" />
+            Bayar di Loket (Belum Lunas)
+          </Badge>
+        );
+      }
       return (
         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-semibold flex items-center gap-1">
           <Clock className="w-3.5 h-3.5" />
-          Menunggu Pembayaran
+          Menunggu Pembayaran QRIS
         </Badge>
       );
     }
@@ -143,7 +153,7 @@ const Bookings = () => {
                       <div>
                         <div className="flex flex-wrap items-center gap-2 mb-1.5">
                           <h3 className="font-bold text-gray-900 text-base md:text-lg">{b.destination_name}</h3>
-                          {getStatusBadge(b.status)}
+                          {getStatusBadge(b.status, b.payment_method)}
                         </div>
                         
                         <div className="text-xs text-gray-600 space-y-1">
@@ -168,18 +178,30 @@ const Bookings = () => {
                         </p>
                       </div>
                       
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl flex items-center gap-1.5 text-xs font-semibold"
-                        onClick={() => toggleExpandBooking(b.id)}
-                      >
-                        {expandedBookingId === b.id ? (
-                          <>Tutup E-Tiket <ChevronUp className="h-4 w-4" /></>
-                        ) : (
-                          <>Buka E-Tiket <ChevronDown className="h-4 w-4" /></>
+                      <div className="flex items-center gap-2">
+                        {b.status === 'pending' && !b.payment_method?.toLowerCase().includes('loket') && (
+                          <Button
+                            size="sm"
+                            className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1"
+                            onClick={() => navigate(`/payment/${b.id}`)}
+                          >
+                            <QrCode className="h-3.5 w-3.5" />
+                            Bayar QRIS
+                          </Button>
                         )}
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl flex items-center gap-1.5 text-xs font-semibold"
+                          onClick={() => toggleExpandBooking(b.id)}
+                        >
+                          {expandedBookingId === b.id ? (
+                            <>Tutup E-Tiket <ChevronUp className="h-4 w-4" /></>
+                          ) : (
+                            <>Buka E-Tiket <ChevronDown className="h-4 w-4" /></>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   
@@ -243,13 +265,50 @@ const Bookings = () => {
                               </div>
                               <div>
                                 <span className="text-gray-400 block">Status:</span>
-                                <span className="font-semibold text-emerald-600">TERKONFIRMASI</span>
+                                {b.status === 'paid' ? (
+                                  <span className="font-semibold text-emerald-600">LUNAS / AKTIF</span>
+                                ) : b.payment_method?.toLowerCase().includes('loket') ? (
+                                  <span className="font-semibold text-blue-600">BAYAR DI LOKET</span>
+                                ) : (
+                                  <span className="font-semibold text-amber-600">MENUNGGU PEMBAYARAN</span>
+                                )}
                               </div>
                             </div>
 
-                            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800 text-[11px] leading-relaxed">
-                              ✓ Tiket digital ini sah dan berlaku langsung pada tanggal kunjungan tanpa perlu antri membeli tiket fisik di loket.
-                            </div>
+                            {b.status === 'paid' ? (
+                              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800 text-[11px] leading-relaxed">
+                                ✓ Tiket digital ini sah dan lunas. Tunjukkan QR Code di samping pada loket / gerbang masuk wisata.
+                              </div>
+                            ) : b.payment_method?.toLowerCase().includes('loket') ? (
+                              <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-blue-900 text-[11px] leading-relaxed space-y-1">
+                                <div className="font-bold flex items-center gap-1.5 text-blue-800">
+                                  <Building2 className="w-3.5 h-3.5" />
+                                  Instruksi Pembayaran di Loket Masuk:
+                                </div>
+                                <p>
+                                  Pesanan kuota tiket Anda telah dicatat. Silakan tunjukkan <strong>Kode Booking {b.booking_code}</strong> ke petugas loket destinasi dan lakukan pembayaran sebesar <strong>Rp {b.total_amount.toLocaleString('id-ID')}</strong> (tunai atau QRIS fisik di lokasi) saat Anda tiba.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-[11px] leading-relaxed space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-amber-800 flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    Menunggu Pembayaran QRIS
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-7 px-3 rounded-lg"
+                                    onClick={() => navigate(`/payment/${b.id}`)}
+                                  >
+                                    Bayar Sekarang →
+                                  </Button>
+                                </div>
+                                <p>
+                                  E-Tiket ini belum aktif karena pembayaran belum diselesaikan. Silakan scan kode QRIS tagihan Anda agar tiket dapat segera diverifikasi.
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
 
