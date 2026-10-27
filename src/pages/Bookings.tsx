@@ -20,7 +20,8 @@ import {
   MapPin,
   Sparkles,
   Building2,
-  QrCode
+  QrCode,
+  Printer
 } from 'lucide-react';
 import {
   Select,
@@ -54,6 +55,24 @@ const Bookings = () => {
 
   const toggleExpandBooking = (id: string) => {
     setExpandedBookingId(prev => (prev === id ? null : id));
+  };
+
+  const handlePrintTicket = (bookingId: string) => {
+    // Remove previous active printable classes
+    document.querySelectorAll('.ticket-print-target').forEach(el => {
+      el.classList.remove('ticket-print-target');
+    });
+
+    const target = document.getElementById(`ticket-card-${bookingId}`);
+    if (target) {
+      target.classList.add('ticket-print-target');
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          target.classList.remove('ticket-print-target');
+        }, 1500);
+      }, 100);
+    }
   };
 
   const getStatusBadge = (status: Booking['status'], paymentMethod?: string) => {
@@ -208,7 +227,10 @@ const Bookings = () => {
                   {/* Expanded Digital Ticket with QR Code */}
                   {expandedBookingId === b.id && (
                     <div className="p-6 bg-slate-50 border-t border-dashed border-gray-200">
-                      <div className="max-w-2xl mx-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                      <div 
+                        id={`ticket-card-${b.id}`}
+                        className="max-w-2xl mx-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-200 transition-all"
+                      >
                         {/* Ticket Branding Header */}
                         <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
                           <div className="flex items-center gap-3">
@@ -312,16 +334,21 @@ const Bookings = () => {
                           </div>
                         </div>
 
-                        {/* Ticket Action Buttons */}
-                        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
+                        {/* Print Only Footer Note */}
+                        <div className="hidden print:block mt-6 pt-3 border-t border-gray-200 text-[10px] text-gray-400 text-center">
+                          Wisata Jelajah Indonesia • E-Tiket Resmi • Sah & Terverifikasi Sistem
+                        </div>
+
+                        {/* Ticket Action Buttons (Hidden when printed) */}
+                        <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end no-print">
                           <Button
                             size="sm"
                             variant="outline"
                             className="text-xs"
-                            onClick={() => window.print()}
+                            onClick={() => handlePrintTicket(b.id)}
                           >
-                            <Download className="w-3.5 h-3.5 mr-1" />
-                            Cetak Tiket
+                            <Printer className="w-3.5 h-3.5 mr-1" />
+                            Cetak E-Tiket
                           </Button>
                           <Button
                             size="sm"

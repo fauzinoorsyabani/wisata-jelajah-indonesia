@@ -107,3 +107,54 @@
     @apply text-primary;
   }
 }
+
+/* Print Styles: Isolate ONLY the requested e-ticket card */
+@media print {
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make ONLY the targeted ticket card visible */
+  .ticket-print-target,
+  .ticket-print-target * {
+    visibility: visible !important;
+  }
+
+  .ticket-print-target {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 680px !important;
+    padding: 24px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Explicitly hide non-printable buttons and banners */
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
