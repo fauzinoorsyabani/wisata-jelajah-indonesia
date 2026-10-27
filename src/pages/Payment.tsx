@@ -63,8 +63,8 @@ const Payment = () => {
 
   // Load Midtrans Snap SDK dynamically
   useEffect(() => {
-    const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'Mid-client-LOIr8e9uX7jFB7Ck';
-    const isProd = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION !== 'false';
+    const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'Mid-client-UqhCGKX-B8eauHwV';
+    const isProd = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true';
     const snapUrl = isProd
       ? 'https://app.midtrans.com/snap/snap.js'
       : 'https://app.sandbox.midtrans.com/snap/snap.js';
