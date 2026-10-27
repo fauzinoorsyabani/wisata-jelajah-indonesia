@@ -111,9 +111,16 @@ const AdminSidebar = () => {
       )}
     >
       <div className="flex items-center justify-between p-4 border-b">
-        {!collapsed && (
-          <Link to="/admin" className="text-xl font-semibold text-primary">
-            Admin Panel
+        {!collapsed ? (
+          <Link to="/admin" className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="Wisata Jelajah Logo" className="h-8 w-8 object-contain" />
+            <span className="text-lg font-bold text-gray-900">
+              Admin<span className="text-primary">Panel</span>
+            </span>
+          </Link>
+        ) : (
+          <Link to="/admin" className="mx-auto">
+            <img src="/logo.png" alt="Wisata Jelajah Logo" className="h-7 w-7 object-contain" />
           </Link>
         )}
         <Button

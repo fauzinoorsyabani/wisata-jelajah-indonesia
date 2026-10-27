@@ -344,8 +344,12 @@ const Payment = () => {
                     
                     <div id="ticket-element" className="border-2 border-dashed border-primary p-6 rounded-lg bg-white">
                       <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center">
-                          <span className="text-xl font-bold text-primary">Wisata<span className="text-secondary">Jelajah</span></span>
+                        <div className="flex items-center gap-2">
+                          <img src="/logo.png" alt="Wisata Jelajah Logo" className="h-9 w-9 object-contain" />
+                          <div>
+                            <span className="text-xl font-bold text-primary">Wisata<span className="text-secondary">Jelajah</span></span>
+                            <span className="block text-[10px] text-gray-400 -mt-1 font-semibold uppercase tracking-wider">Tiket Resmi</span>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-gray-500">Nomor Booking</p>

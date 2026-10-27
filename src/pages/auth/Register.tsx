@@ -130,6 +130,15 @@ const Register = () => {
         <div className="container-custom max-w-md">
           <Card className="shadow-md">
             <CardHeader className="text-center">
+              <div className="flex justify-center mb-3">
+                <Link to="/" className="inline-flex items-center gap-2 group">
+                  <img 
+                    src="/logo.png" 
+                    alt="Wisata Jelajah Indonesia" 
+                    className="h-16 w-16 object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-105" 
+                  />
+                </Link>
+              </div>
               <CardTitle className="text-2xl font-bold">Buat Akun Baru</CardTitle>
               <CardDescription>
                 Daftar untuk menjelajahi berbagai destinasi wisata

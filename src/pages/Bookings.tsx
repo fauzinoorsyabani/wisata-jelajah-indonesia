@@ -189,13 +189,16 @@ const Bookings = () => {
                       <div className="max-w-2xl mx-auto bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                         {/* Ticket Branding Header */}
                         <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
-                          <div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-wider">E-Tiket Resmi WisataJelajah</span>
-                            <h4 className="font-extrabold text-xl text-gray-900">{b.destination_name}</h4>
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                              <MapPin className="w-3.5 h-3.5 text-primary" />
-                              {b.destination_location}
-                            </p>
+                          <div className="flex items-center gap-3">
+                            <img src="/logo.png" alt="Wisata Jelajah Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
+                            <div>
+                              <span className="text-xs font-bold text-primary uppercase tracking-wider">E-Tiket Resmi WisataJelajah</span>
+                              <h4 className="font-extrabold text-xl text-gray-900">{b.destination_name}</h4>
+                              <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-3.5 h-3.5 text-primary" />
+                                {b.destination_location}
+                              </p>
+                            </div>
                           </div>
                           <div className="text-right">
                             <span className="text-[10px] text-gray-400 block uppercase">Kode Booking</span>
